@@ -15,7 +15,7 @@ class LightComponent(
 ) : Component {
 
     companion object {
-        const val ID: Short = 6
+        const val ID: Short = 5
     }
 
     override fun getId(): Short = ID

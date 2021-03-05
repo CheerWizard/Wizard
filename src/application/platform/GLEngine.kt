@@ -8,12 +8,7 @@ import org.lwjgl.opengl.GL30.*
 
 class GLEngine(editor: Editor) : Engine(editor = editor) {
 
-    var clearColor: Color4f = Color4f(
-        red = 0.5f,
-        blue = 0.5f,
-        green = 0.5f,
-        alpha = 1f,
-    )
+    var clearColor: Color4f = Color4f.white()
 
     override fun onCreate() {
         putSystem(

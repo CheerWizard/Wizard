@@ -3,7 +3,7 @@ package application.graphics.obj
 import application.core.collection.Vector3fList
 import application.core.math.Vector2f
 import application.core.math.Vector3f
-import application.graphics.mesh.VertexBuffer
+import application.graphics.vertex.VertexBuffer
 import java.io.BufferedReader
 import java.io.FileReader
 import java.io.IOException

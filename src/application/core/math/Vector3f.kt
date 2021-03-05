@@ -1,5 +1,6 @@
 package application.core.math
 
+import org.joml.Math
 import org.lwjgl.BufferUtils
 import java.nio.FloatBuffer
 import kotlin.math.sqrt
@@ -14,16 +15,21 @@ open class Vector3f(
         private val BUFFER = BufferUtils.createFloatBuffer(3)
     }
 
+    fun size(): Int = 3
+
+    fun byteSize(): Int = size() * Float.SIZE_BYTES
+
     fun squaredLength(): Float = x * x + y * y + z * z
 
     fun length(): Float = sqrt(squaredLength().toDouble()).toFloat()
 
     fun normalize() = divide(length())
 
-    fun add(other: Vector3f) {
+    fun add(other: Vector3f): Vector3f {
         x += other.x
         y += other.y
         z += other.z
+        return this
     }
 
     open fun addX(x: Float) {
@@ -85,6 +91,16 @@ open class Vector3f(
         val y = z * other.x - this.x * other.z
         val z = this.x * other.y - this.y * other.x
         return Vector3f(x, y, z)
+    }
+
+    fun cross(v: Vector3f, dest: Vector3f): Vector3f {
+        val rx = Math.fma(y, v.z, -z * v.y)
+        val ry = Math.fma(z, v.x, -x * v.z)
+        val rz = Math.fma(x, v.y, -y * v.x)
+        dest.x = rx
+        dest.y = ry
+        dest.z = rz
+        return dest
     }
 
     fun lerp(other: Vector3f, alpha: Float) {

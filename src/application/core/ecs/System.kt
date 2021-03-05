@@ -2,46 +2,54 @@ package application.core.ecs
 
 import application.core.Destroyable
 import application.core.collection.DestroyableList
+import application.core.collection.DestroyableMap
 
-abstract class System(protected val entityGroups: DestroyableList<EntityGroup> = DestroyableList()) : Destroyable {
+abstract class System(
+    protected val entityGroups: DestroyableList<EntityGroup> = DestroyableList(),
+    protected val sceneComponents: DestroyableMap<Short, SceneComponent> = DestroyableMap()
+) : Destroyable {
+
+    companion object {
+        const val INCOMPATIBLE_ENTITY_GROUP: Int = -1
+    }
 
     abstract fun getId(): Byte
     abstract fun onCreate()
 
     open fun onPrepare() {
-        for (entityGroup in entityGroups) {
-            onPrepare(entityGroup)
+        for (entityGroupId in entityGroups.indices) {
+            onPrepareEntityGroup(entityGroupId)
         }
     }
 
-    protected open fun onPrepare(entityGroup: EntityGroup) {
-        for (entity in entityGroup.entities) {
-            onPrepare(entity)
+    protected open fun onPrepareEntityGroup(entityGroupId: Int) {
+        for (entityId in entityGroups[entityGroupId].entities.indices) {
+            onPrepareEntity(entityGroupId = entityGroupId, entityId = entityId)
         }
     }
 
-    protected abstract fun onPrepare(entity: Entity)
+    protected abstract fun onPrepareEntity(entityGroupId: Int, entityId: Int)
 
     open fun onUpdate() {
-        for (entityGroup in entityGroups) {
-            onUpdate(entityGroup)
+        for (entityGroupId in entityGroups.indices) {
+            onUpdateEntityGroup(entityGroupId)
         }
     }
 
-    protected open fun onUpdate(entityGroup: EntityGroup) {
-        for (entity in entityGroup.entities) {
-            onUpdate(entity)
+    protected open fun onUpdateEntityGroup(entityGroupId: Int) {
+        for (entityId in entityGroups[entityGroupId].entities.indices) {
+            onUpdateEntity(entityGroupId = entityGroupId, entityId = entityId)
         }
     }
 
-    protected abstract fun onUpdate(entity: Entity)
+    protected abstract fun onUpdateEntity(entityGroupId: Int, entityId: Int)
 
     fun addEntityGroup(entityGroup: EntityGroup) : Int {
+        if (!entityGroup.contains(getRequiredComponentId())) return INCOMPATIBLE_ENTITY_GROUP
+
         entityGroups.add(entityGroup)
         return entityGroups.size - 1
     }
-
-    fun isCompatible(entityGroup: EntityGroup) : Boolean = entityGroup.contains(getRequiredComponentId())
 
     protected abstract fun getRequiredComponentId() : Short
 
@@ -79,12 +87,25 @@ abstract class System(protected val entityGroups: DestroyableList<EntityGroup> =
         }
     }
 
+    fun addSceneComponent(sceneComponent: SceneComponent) {
+        sceneComponents[sceneComponent.getId()] = sceneComponent
+    }
+
+    fun removeSceneComponent(sceneComponentId: Short) {
+        sceneComponents.remove(sceneComponentId)
+    }
+
     fun<T : Component> getComponent(entityGroupId: Int, componentId: Short): T? = entityGroups[entityGroupId].getComponent(componentId)
 
     fun<T : Component> getNonNullComponent(entityGroupId: Int, componentId: Short) : T = entityGroups[entityGroupId].getNonNullComponent(componentId)
 
+    fun<T : SceneComponent> getSceneComponent(sceneComponentId: Short) : T? = sceneComponents[sceneComponentId] as T?
+
+    fun<T : SceneComponent> getNonNullSceneComponent(sceneComponentId: Short) : T = sceneComponents[sceneComponentId] as T
+
     override fun onDestroy() {
         entityGroups.clear()
+        sceneComponents.clear()
     }
 
 }

@@ -44,14 +44,17 @@ abstract class ShaderOwner(
         uniformLocations.clear()
     }
 
+    abstract fun setAttribute(attributeName: String)
+    abstract fun setAttribute(attributeName: String, attributeLocation: Int)
+
     abstract fun putUniformName(uniformName: String)
-    abstract fun setVertex(vertexAttribute: Int, vertexName: String)
     abstract fun setUniform(uniformName: String, uniformValue: Matrix4f)
     abstract fun setUniform(uniformName: String, uniformValue: Vector4f)
     abstract fun setUniform(uniformName: String, uniformValue: Vector3f)
     abstract fun setUniform(uniformName: String, uniformValue: Vector2f)
     abstract fun setUniform(uniformName: String, uniformValue: Float)
     abstract fun setUniform(uniformName: String, uniformValue: Int)
+    abstract fun setUniform(uniformName: String, uniformValue: IntArray)
     abstract fun setUniformTrue(uniformName: String)
     abstract fun setUniformFalse(uniformName: String)
 

@@ -17,8 +17,8 @@ open class DestroyableMap<K, V: Destroyable> : HashMap<K, V>() {
     }
 
     override fun clear() {
-        for (entity in values) {
-            entity.onDestroy()
+        for (value in values) {
+            value.onDestroy()
         }
         super.clear()
     }

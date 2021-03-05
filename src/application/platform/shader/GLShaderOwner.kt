@@ -50,8 +50,13 @@ class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(
         uniformLocations[uniformName] = glGetUniformLocation(id, uniformName)
     }
 
-    override fun setVertex(vertexAttribute: Int, vertexName: String) {
-        glBindAttribLocation(id, vertexAttribute, vertexName)
+    override fun setAttribute(attributeName: String) {
+        val attributeLocation = glGetAttribLocation(id, attributeName)
+        setAttribute(attributeName = attributeName, attributeLocation = attributeLocation)
+    }
+
+    override fun setAttribute(attributeName: String, attributeLocation: Int) {
+        glBindAttribLocation(id, attributeLocation, attributeName)
     }
 
     override fun setUniform(uniformName: String, uniformValue: Float) {
@@ -63,6 +68,12 @@ class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(
     override fun setUniform(uniformName: String, uniformValue: Int) {
         uniformLocations[uniformName]?.let { l->
             glUniform1i(l, uniformValue)
+        }
+    }
+
+    override fun setUniform(uniformName: String, uniformValue: IntArray) {
+        uniformLocations[uniformName]?.let { l->
+            glUniform1iv(l, uniformValue)
         }
     }
 

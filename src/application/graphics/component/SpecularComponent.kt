@@ -6,13 +6,13 @@ class SpecularComponent(
     var shiningUniformName: String,
     var reflectivityUniformName: String,
     var brightnessUniformName: String,
-    var shining: Float = 1f,
+    var shining: Float = 2f,
     var reflectivity: Float = 1f,
     var brightness: Float = 0f,
 ) : Component {
 
     companion object {
-        const val ID: Short = 7
+        const val ID: Short = 6
     }
 
     override fun getId(): Short = ID

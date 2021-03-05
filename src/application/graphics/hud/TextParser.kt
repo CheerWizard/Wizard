@@ -1,7 +1,7 @@
 package application.graphics.hud
 
-import application.graphics.mesh.VertexBuffer
 import application.graphics.texture.Texture
+import application.graphics.vertex.VertexBuffer
 import java.nio.charset.Charset
 import java.util.*
 

@@ -4,24 +4,29 @@ import application.Application
 import application.core.ecs.Entity
 import application.core.ecs.EntityGroup
 import application.core.math.TransformMatrix4f
-import application.graphics.render.Render3dSystem
+import application.core.math.Vector3f
 import application.graphics.component.CameraComponent
-import application.graphics.component.TextureComponent
+import application.graphics.component.MeshComponent
+import application.graphics.material.MaterialComponent
 import application.graphics.obj.ObjParser
+import application.graphics.render.Render3dSystem
 import application.graphics.shader.ShaderComponent
-import application.platform.mesh.GLMeshComponent
-import application.platform.mesh.GLVertex
-import application.platform.mesh.GLVertexBuffer
+import application.graphics.terrain.TerrainParser
 import application.platform.obj.GLObjParser
 import application.platform.shader.GLFragmentShader
 import application.platform.shader.GLShaderOwner
 import application.platform.shader.GLVertexShader
+import application.platform.terrain.GLTerrainParser
 import application.platform.texture.GLTextureCubeMap
+import application.platform.vertex.GLIndexBuffer
+import application.platform.vertex.GLVertexArray
+import application.platform.vertex.GLVertexBuffer
 import org.lwjgl.glfw.GLFW
 
 abstract class GLApplication(title: String = "OpenGL") : Application(title = title) {
 
-    override val objParser: ObjParser = GLObjParser()
+    protected val objParser: ObjParser = GLObjParser()
+    protected val terrainParser: TerrainParser = GLTerrainParser()
 
     protected open lateinit var cameraComponent: CameraComponent
 
@@ -104,19 +109,13 @@ abstract class GLApplication(title: String = "OpenGL") : Application(title = tit
             size, -size,  size
         )
 
-        val vertexBuffer = GLVertexBuffer(
-            vertex = GLVertex(
-                name = "skyboxVertices",
-                typeSize = 3
-            ),
-            data = vertices
+        val meshComponent = MeshComponent(
+            vertexArray = GLVertexArray(),
+            vertexBuffer = GLVertexBuffer(),
+            indexBuffer = GLIndexBuffer()
         )
 
-        val meshComponent = GLMeshComponent().apply {
-            addVertexBuffer(vertexBuffer)
-        }
-
-        val textureComponent = TextureComponent().apply {
+        val textureComponent = MaterialComponent().apply {
             addTexture(
                 GLTextureCubeMap(
                     uniformName = "skyboxCubeSampler",
@@ -150,7 +149,7 @@ abstract class GLApplication(title: String = "OpenGL") : Application(title = tit
                 Entity(
                     transformation = TransformMatrix4f(
                         name = "skyboxTransform",
-                        scale = 500f
+                        scalar = Vector3f(x = 500f, y = 500f, z = 500f)
                     )
                 )
             )

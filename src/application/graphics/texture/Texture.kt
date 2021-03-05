@@ -1,12 +1,15 @@
 package application.graphics.texture
 
 import application.core.Destroyable
+import java.nio.ByteBuffer
 
 abstract class Texture(
     private val storagePath: String = STORAGE_PATH,
-    var uniformSamplerName: String,
+    var samplerUniformName: String,
+    var strengthUniformName: String,
     val textureGrid: TextureGrid = TextureGrid(),
-    val detalization: Float = 0f
+    val detalization: Float = 0f,
+    var strength: Float = 1f
 ) : Destroyable {
 
     companion object {
@@ -18,25 +21,27 @@ abstract class Texture(
     var width: Int = 0
     var height: Int = 0
 
-    var uniformSamplerValue = 0
+    var sampler = 0
+
+    var transparency = 0.5f
 
     protected abstract val faces: IntArray
 
     fun create(fileName: String) : Texture {
-        createData {
+        createBufferData {
             val textureData = TextureData(fileName, storagePath)
             width = textureData.width
             height = textureData.height
-            create(textureData)
+            create(textureData.sourceBuffer)
             onCreate()
         }
         return this
     }
 
-    protected abstract fun create(textureData: TextureData)
+    protected abstract fun create(textureSource: ByteBuffer?)
 
     fun create(fileNames: Array<String>): Texture {
-        createData {
+        createBufferData {
             for (i in fileNames.indices) {
                 createFace(TextureData(fileNames[i], storagePath), faces[i])
             }
@@ -45,24 +50,47 @@ abstract class Texture(
         return this
     }
 
-    protected fun createData(creationFunction : () -> Unit) {
-        onBind()
+    protected fun createBufferData(creationFunction : () -> Unit) {
+        bind()
         creationFunction.invoke()
         deactivateTexture()
-        onUnbind()
+        unbind()
     }
 
     protected abstract fun createFace(textureData: TextureData, face: Int)
 
-    abstract fun onBind()
-    abstract fun onUnbind()
-    abstract fun onCreate()
+    fun createColor(width: Int, height: Int) : Texture {
+        createBufferData {
+            this.width = width
+            this.height = height
+            createColor()
+            onCreate()
+        }
+        return this
+    }
+
+    fun createDepth(width: Int, height: Int) : Texture {
+        createBufferData {
+            this.width = width
+            this.height = height
+            createDepth()
+            onCreate()
+        }
+        return this
+    }
+
+    protected abstract fun createColor()
+    protected abstract fun createDepth()
+
+    abstract fun bind()
+    abstract fun unbind()
+    protected abstract fun onCreate()
 
     abstract fun activateTexture()
     abstract fun deactivateTexture()
 
     override fun onDestroy() {
-        onUnbind()
+        unbind()
     }
 
 }

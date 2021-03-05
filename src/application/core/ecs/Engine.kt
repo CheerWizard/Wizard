@@ -86,6 +86,16 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
         componentId: Short
     ) : R = getEntityGroup<T>(systemId = systemId, entityGroupId = entityGroupId).getNonNullComponent(componentId)
 
+    fun<T : System, R : SceneComponent> getSceneComponent(
+        systemId: Byte,
+        sceneComponentId: Short
+    ) : R? = (systems[systemId] as T).getSceneComponent(sceneComponentId)
+
+    fun<T : System, R : SceneComponent> getNonNullSceneComponent(
+        systemId: Byte,
+        sceneComponentId: Short
+    ) : R = (systems[systemId] as T).getNonNullSceneComponent(sceneComponentId)
+
     override fun onDestroy() {
         systems.clear()
         editor.onDestroy()

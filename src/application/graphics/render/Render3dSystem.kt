@@ -1,10 +1,10 @@
 package application.graphics.render
 
-import application.core.ecs.EntityGroup
 import application.graphics.component.LightComponent
 import application.graphics.component.SpecularComponent
 import application.graphics.math.Projection3dMatrix4f
 import application.graphics.math.ProjectionMatrix4f
+import application.graphics.shader.ShaderComponent
 
 abstract class Render3dSystem(screenWidth: Float, screenHeight: Float) : RenderSystem() {
 
@@ -20,8 +20,11 @@ abstract class Render3dSystem(screenWidth: Float, screenHeight: Float) : RenderS
         screenHeight = screenHeight
     )
 
-    override fun prepareComponents(entityGroup: EntityGroup) {
-        super.prepareComponents(entityGroup)
+    override fun prepareComponents(entityGroupId: Int) {
+        super.prepareComponents(entityGroupId)
+
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
 
         val lightComponent = entityGroup.getComponent<LightComponent>(LightComponent.ID)
         lightComponent?.let {
@@ -42,8 +45,11 @@ abstract class Render3dSystem(screenWidth: Float, screenHeight: Float) : RenderS
         }
     }
 
-    override fun updateComponents(entityGroup: EntityGroup) {
-        super.updateComponents(entityGroup)
+    override fun updateComponents(entityGroupId: Int) {
+        super.updateComponents(entityGroupId)
+
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
 
         val lightComponent = entityGroup.getComponent<LightComponent>(LightComponent.ID)
         lightComponent?.let {

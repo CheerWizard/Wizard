@@ -7,7 +7,7 @@ class TransformMatrix4f(
     val name: String,
     val position: Translator3f = Translator3f(),
     val rotation: Rotator3f = Rotator3f(),
-    var scale: Float = 1f
+    var scalar: Vector3f = Vector3f(x = 1f, y = 1f, z = 1f)
 ) : Matrix4f() {
 
     init {
@@ -20,7 +20,7 @@ class TransformMatrix4f(
         rotate(rotation.x, 1f, 0f, 0f)
         rotate(rotation.y, 0f, 1f, 0f)
         rotate(rotation.z, 0f, 0f, 1f)
-        scale(scale)
+        scale(scalar.x, scalar.y, scalar.z)
     }
 
 }

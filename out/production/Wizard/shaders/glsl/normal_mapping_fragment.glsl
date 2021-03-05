@@ -2,53 +2,61 @@
 
 in vec2 passCubeTextures;
 
-// sun light
-in vec3 passSunLightVector;
-in float passSunLightDistance;
-
-// point light
-in vec3 passPointLightVector;
-in float passPointLightDistance;
+in vec3 passLightVector;
+in float passLightDistance;
 
 in vec3 passCameraVector;
 
 out vec4 cubeFragment;
 
-uniform sampler2D textureSampler;
-uniform sampler2D normalsSampler;
-//uniform sampler2D textureSampler2;
+uniform sampler2D diffuseSampler1;
+uniform sampler2D diffuseSampler2;
+uniform sampler2D normalSampler;
+uniform sampler2D specularSampler;
+uniform sampler2D parallaxSampler;
 
-// sun light
-uniform vec3 sunLightColor;
-uniform vec3 sunLightRadius;
+uniform vec3 lightColor;
+uniform vec3 lightRadius;
 
 // specular uniforms
 uniform float shining;
 uniform float reflectivity;
 uniform float brightness;
 
+uniform float parallaxOffset;
+
+// texture strength;
+uniform float diffuseStrength1;
+uniform float diffuseStrength2;
+uniform float normalStrength;
+uniform float specularStrength;
+uniform float parallaxStrength;
+
 void main(void) {
-
-    vec4 normalsMap = 2.0 * texture(normalsSampler, passCubeTextures) - 1.0;
+    // sample parallax map
+    vec3 parallaxMap = texture(parallaxSampler, passCubeTextures).rgb * parallaxStrength + parallaxOffset;
+    vec2 cubeTextures = passCubeTextures + passCameraVector.xy * (parallaxMap.r + parallaxMap.g + parallaxMap.b);
+    // sample diffuse map
+    vec4 diffuseMap1 = texture(diffuseSampler1, cubeTextures) * diffuseStrength1;
+    vec4 diffuseMap2 = texture(diffuseSampler2, cubeTextures) * diffuseStrength2;
+    vec4 diffuseMap = diffuseMap1;
+    // sample normal map
+    vec4 normalsMap = 2.0 * texture(normalSampler, cubeTextures) * normalStrength - 1.0;
     vec3 cubeNormal = normalize(normalsMap.rgb);
+    // sample specular map
+    vec3 specularMap = texture(specularSampler, cubeTextures).rgb * specularStrength;
 
-    float sunLightStrength = sunLightRadius.x + (sunLightRadius.y * passSunLightDistance / 10.0f) + (sunLightRadius.z * passSunLightDistance * passSunLightDistance / 100.0f);
-    float sunLightDot = dot(cubeNormal, passSunLightVector);
-    vec3 sunLightDiffuse =  max(sunLightDot, brightness) * sunLightColor * sunLightStrength;
-    vec3 reflectedSunLight = reflect(-passSunLightVector, cubeNormal);
+    // calculate diffuse light
+    float sunLightStrength = lightRadius.x + (lightRadius.y * passLightDistance / 10.0f) + (lightRadius.z * passLightDistance * passLightDistance / 100.0f);
+    float sunLightDot = dot(cubeNormal, passLightVector);
+    vec3 sunLightDiffuse =  max(sunLightDot, brightness) * lightColor * sunLightStrength;
+    // calculate specular light
+    vec3 reflectedSunLight = reflect(-passLightVector, cubeNormal);
     float sunSpecularDot = dot(reflectedSunLight, passCameraVector);
     sunSpecularDot = max(sunSpecularDot, 0.0);
     float sunDamping = pow(sunSpecularDot, shining);
-    vec3 sunLightSpecular = sunDamping * reflectivity * sunLightColor * sunLightStrength;
+    vec3 sunLightSpecular = sunDamping * reflectivity * lightColor * sunLightStrength * specularMap;
 
-    vec3 diffuseLight = sunLightDiffuse;
-    vec3 specularLight = sunLightSpecular;
-
-    vec4 textureColor = texture(textureSampler, passCubeTextures);
-    if (textureColor.a < 0.5 || textureColor.r == 0 && textureColor.g == 0 && textureColor.b == 0) {
-        discard;
-    }
-
-    cubeFragment = vec4(diffuseLight, 1.0) * textureColor + vec4(specularLight, 1.0);
-
+    // pixel output
+    cubeFragment = vec4(sunLightDiffuse, 1.0) * diffuseMap + vec4(sunLightSpecular, 1.0);
 }

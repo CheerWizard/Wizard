@@ -29,4 +29,14 @@ class GLRender3dSystem(screenWidth: Float, screenHeight: Float) : Render3dSystem
         glDisable(GL_CULL_FACE)
     }
 
+    override fun enableClipping() {
+        super.enableClipping()
+        glEnable(GL_CLIP_DISTANCE0)
+    }
+
+    override fun disableClipping() {
+        super.disableClipping()
+        glDisable(GL_CLIP_DISTANCE0)
+    }
+
 }

@@ -5,7 +5,7 @@ import application.core.ecs.Component
 class ShaderComponent(val shaderOwner: ShaderOwner) : Component {
 
     companion object {
-        const val ID : Short = 10
+        const val ID : Short = 1
     }
 
     fun startShader() {

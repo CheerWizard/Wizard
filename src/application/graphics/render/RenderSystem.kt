@@ -1,34 +1,23 @@
 package application.graphics.render
 
-import application.core.ecs.Entity
-import application.core.ecs.EntityGroup
 import application.core.ecs.System
 import application.graphics.component.CameraComponent
-import application.graphics.component.ColorComponent
-import application.graphics.mesh.MeshComponent
-import application.graphics.component.TextureComponent
+import application.graphics.component.MeshComponent
+import application.graphics.material.MaterialComponent
 import application.graphics.math.ProjectionMatrix4f
+import application.graphics.scene.ReflectionSceneComponent
+import application.graphics.scene.RefractionSceneComponent
 import application.graphics.shader.ShaderComponent
+import application.graphics.uniform.UVector4f
 
 abstract class RenderSystem : System() {
 
     abstract val projection : ProjectionMatrix4f
 
-    protected lateinit var shaderComponent: ShaderComponent
-
     fun applyWindowAspectRatio(width: Float, height: Float) {
         projection.screenWidth = width
         projection.screenHeight = height
         projection.apply()
-        updateProjection()
-    }
-
-    private fun updateProjection() {
-        shaderComponent.run {
-            startShader()
-            shaderOwner.setUniform(projection.name, projection)
-            stopShader()
-        }
     }
 
     override fun onCreate() {
@@ -38,116 +27,131 @@ abstract class RenderSystem : System() {
         }
     }
 
-    override fun onPrepare(entityGroup: EntityGroup) {
-        shaderComponent = entityGroup.getNonNullComponent(ShaderComponent.ID)
+    override fun onPrepareEntityGroup(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
 
         val meshComponent = entityGroup.getComponent<MeshComponent>(MeshComponent.ID)
-        meshComponent?.let {
-            it.bind()
-            for (vertexBuffer in it.vertexBuffers) {
-                val vertex = vertexBuffer.vertex
-                shaderComponent.shaderOwner.setVertex(vertexName = vertex.name, vertexAttribute = vertex.attribute)
+        meshComponent?.let { mesh->
+            mesh.create()
+            for (attribute in mesh.vertexBuffer.getAttributes()) {
+                shaderComponent.shaderOwner.setAttribute(attributeLocation = attribute.location, attributeName = attribute.name)
             }
         }
 
-        shaderComponent.shaderOwner.onPrepare()
+        shaderComponent.shaderOwner.run {
+            onPrepare()
+            putUniformName(projection.name)
+        }
 
-        prepareProjection()
-        updateProjection()
+        prepareComponents(entityGroupId)
 
-        prepareComponents(entityGroup)
-        super.onPrepare(entityGroup)
+        super.onPrepareEntityGroup(entityGroupId)
     }
 
-    protected open fun prepareComponents(entityGroup: EntityGroup) {
-        val colorComponent = entityGroup.getComponent<ColorComponent>(ColorComponent.ID)
-        colorComponent?.let {
-            shaderComponent.shaderOwner.putUniformName(colorComponent.colorName)
-        }
+    protected open fun prepareComponents(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
 
-        val textureComponent = entityGroup.getComponent<TextureComponent>(TextureComponent.ID)
-        if (textureComponent != null) {
-            prepareTexture(textureComponent)
-        }
+        prepareSceneComponents(entityGroupId)
 
         val cameraComponent = entityGroup.getComponent<CameraComponent>(CameraComponent.ID)
-        cameraComponent?.let {
-            shaderComponent.shaderOwner.putUniformName(it.transformMatrix4f.name)
+        if (cameraComponent != null) {
+            shaderComponent.shaderOwner.putUniformName(cameraComponent.transformMatrix4f.name)
+        }
+
+        val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
+        if (materialComponent != null) {
+            prepareMaterial(entityGroupId = entityGroupId, materialComponent = materialComponent)
         }
     }
 
-    private fun prepareProjection() {
-        shaderComponent.shaderOwner.putUniformName(projection.name)
-    }
+    private fun prepareSceneComponents(entityGroupId: Int) {
+        val shaderComponent = entityGroups[entityGroupId].getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val reflectionComponent = getSceneComponent<ReflectionSceneComponent>(ReflectionSceneComponent.ID)
+        val refractionComponent = getSceneComponent<RefractionSceneComponent>(RefractionSceneComponent.ID)
 
-    private fun prepareTexture(textureComponent: TextureComponent) {
-        for (texture in textureComponent.textures) {
-            shaderComponent.shaderOwner.putUniformName(texture.uniformSamplerName)
-            shaderComponent.shaderOwner.putUniformName(texture.textureGrid.gridOffsetName)
-            shaderComponent.shaderOwner.putUniformName(texture.textureGrid.rowCountName)
+        if (reflectionComponent != null) {
+            val clipping = reflectionComponent.clipping
+            if (clipping != null) {
+                shaderComponent.shaderOwner.putUniformName(clipping.name)
+            }
+        }
+
+        if (refractionComponent != null) {
+            val clipping = refractionComponent.clipping
+            if (clipping != null) {
+                shaderComponent.shaderOwner.putUniformName(clipping.name)
+            }
         }
     }
 
-    override fun onPrepare(entity: Entity) {
+    private fun prepareMaterial(entityGroupId: Int, materialComponent: MaterialComponent) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+
+        val materialColor = materialComponent.color
+        if (materialColor != null) {
+            shaderComponent.shaderOwner.putUniformName(materialColor.name)
+        }
+
+        val materialParallax = materialComponent.parallax
+        if (materialParallax != null) {
+            shaderComponent.shaderOwner.putUniformName(materialParallax.offsetUniformName)
+        }
+
+        for (texture in materialComponent.textures) {
+            shaderComponent.shaderOwner.run {
+                putUniformName(texture.samplerUniformName)
+                putUniformName(texture.textureGrid.gridOffsetName)
+                putUniformName(texture.textureGrid.rowCountName)
+                putUniformName(texture.strengthUniformName)
+            }
+        }
+    }
+
+    override fun onPrepareEntity(entityGroupId: Int, entityId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val entity = entityGroup.entities[entityId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+
         shaderComponent.shaderOwner.putUniformName(entity.transformation.name)
 
-        val textureComponent = entity.textureComponent
-        if (textureComponent != null) {
-            prepareTexture(textureComponent)
+        val materialComponent = entity.materialComponent
+        if (materialComponent != null) {
+            prepareMaterial(entityGroupId = entityGroupId, materialComponent = materialComponent)
         }
     }
 
     override fun getRequiredComponentId(): Short = ShaderComponent.ID
 
-    override fun onUpdate(entityGroup: EntityGroup) {
-        shaderComponent = entityGroup.getNonNullComponent(ShaderComponent.ID)
+    override fun onUpdateEntityGroup(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val meshComponent = entityGroup.getComponent<MeshComponent>(MeshComponent.ID) ?: return
 
         shaderComponent.startShader()
 
-        updateComponents(entityGroup)
+        updateComponents(entityGroupId)
 
-        val meshComponent = entityGroup.getComponent<MeshComponent>(MeshComponent.ID)
-        meshComponent?.run {
+        meshComponent.run {
             if (usesCullFace) {
                 enableCullFace()
             } else {
                 disableCullFace()
             }
-            setPolygonMode(meshComponent.polygonMode)
+
+            setPolygonMode(meshComponent.getPolygonMode())
+
             bindVertexArray()
             enableAttributes()
-        }
+            bindIndexBuffer()
+            bindVertexBuffer()
 
-        val drawFunction: ()-> Unit = if (meshComponent != null) {
-            if (meshComponent.hasIndices()) {
-                {
-                    onDrawIndices(meshComponent.getIndexCount())
-                }
-            } else {
-                {
-                    onDrawVertices(meshComponent.getVertexCount())
-                }
-            }
-        } else {
-            {}
-        }
+            super.onUpdateEntityGroup(entityGroupId)
 
-        val textureComponent = entityGroup.getComponent<TextureComponent>(TextureComponent.ID)
+            onDrawIndices(indexBuffer.position())
 
-        for (entity in entityGroup.entities) {
-            onUpdate(entity)
-            textureComponent?.let {
-                updateTexture(it.apply {
-                    textures[0].textureGrid.apply {
-                        textureGridId = entity.textureGridId
-                        apply()
-                    }
-                })
-            }
-            drawFunction.invoke()
-        }
-
-        meshComponent?.run {
             disableAttributes()
             unbindVertexArray()
         }
@@ -155,47 +159,94 @@ abstract class RenderSystem : System() {
         shaderComponent.stopShader()
     }
 
-    private fun updateTexture(textureComponent: TextureComponent) {
-        for (texture in textureComponent.textures) {
-            texture.run {
-                shaderComponent.shaderOwner.setUniform(uniformName = texture.uniformSamplerName, uniformValue = texture.uniformSamplerValue)
-                shaderComponent.shaderOwner.setUniform(uniformName = texture.textureGrid.gridOffsetName, uniformValue = texture.textureGrid.gridOffset)
-                shaderComponent.shaderOwner.setUniform(uniformName = texture.textureGrid.rowCountName, uniformValue = texture.textureGrid.rowCountValue.toFloat())
-                activateTexture()
-                onBind()
-            }
-        }
-    }
+    protected open fun updateComponents(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
 
-    protected open fun updateComponents(entityGroup: EntityGroup) {
-        val colorComponent = entityGroup.getComponent<ColorComponent>(ColorComponent.ID)
-        colorComponent?.let {
-            shaderComponent.shaderOwner.setUniform(uniformName = colorComponent.colorName, uniformValue = colorComponent.color)
-        }
+        shaderComponent.shaderOwner.setUniform(projection.name, projection)
 
         val cameraComponent = entityGroup.getComponent<CameraComponent>(CameraComponent.ID)
-        cameraComponent?.let {
-            shaderComponent.shaderOwner.setUniform(it.transformMatrix4f.name, it.transformMatrix4f)
+        if (cameraComponent != null) {
+            shaderComponent.shaderOwner.setUniform(cameraComponent.transformMatrix4f.name, cameraComponent.transformMatrix4f)
+        }
+
+        val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
+        if (materialComponent != null) {
+            updateEntityGroupMaterial(entityGroupId)
         }
     }
 
-    override fun onUpdate(entity: Entity) {
-        val transform = entity.transformation
-        shaderComponent.shaderOwner.setUniform(transform.name, transform)
+    private fun updateEntityGroupMaterial(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val materialComponent = entityGroup.getNonNullComponent<MaterialComponent>(MaterialComponent.ID)
 
-        val textureComponent = entity.textureComponent
-        if (textureComponent != null) {
-            updateTexture(textureComponent)
+        val materialColor = materialComponent.color
+        if (materialColor != null) {
+            shaderComponent.shaderOwner.setUniform(materialColor.name, materialColor)
+        }
+
+        val materialParallax = materialComponent.parallax
+        if (materialParallax != null) {
+            shaderComponent.shaderOwner.setUniform(materialParallax.offsetUniformName, materialParallax.offset)
+        }
+
+        for (texture in materialComponent.textures) {
+            shaderComponent.shaderOwner.run {
+                setUniform(uniformName = texture.samplerUniformName, uniformValue = texture.sampler)
+                setUniform(uniformName = texture.textureGrid.gridOffsetName, uniformValue = texture.textureGrid.gridOffset)
+                setUniform(uniformName = texture.textureGrid.rowCountName, uniformValue = texture.textureGrid.rowCountValue.toFloat())
+                setUniform(uniformName = texture.strengthUniformName, uniformValue = texture.strength)
+            }
+            texture.activateTexture()
+            texture.bind()
+        }
+    }
+
+    override fun onUpdateEntity(entityGroupId: Int, entityId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val entity = entityGroup.entities[entityId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+
+        val entityTransformation = entity.transformation
+        shaderComponent.shaderOwner.setUniform(entityTransformation.name, entityTransformation)
+
+        val materialComponent = entity.materialComponent
+        if (materialComponent != null) {
+            updateEntityMaterial(entityGroupId = entityGroupId, entityId = entityId)
+        }
+    }
+
+    private fun updateEntityMaterial(entityGroupId: Int, entityId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val entity = entityGroup.entities[entityId]
+        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val materialComponent = entity.materialComponent as MaterialComponent
+
+        val materialColor = materialComponent.color
+        if (materialColor != null) {
+            shaderComponent.shaderOwner.setUniform(materialColor.name, materialColor)
+        }
+
+        val materialParallax = materialComponent.parallax
+        if (materialParallax != null) {
+            shaderComponent.shaderOwner.setUniform(materialParallax.offsetUniformName, materialParallax.offset)
+        }
+
+        for (texture in materialComponent.textures) {
+            shaderComponent.shaderOwner.run {
+                setUniform(uniformName = texture.samplerUniformName, uniformValue = texture.sampler)
+                setUniform(uniformName = texture.textureGrid.gridOffsetName, uniformValue = texture.textureGrid.gridOffset)
+                setUniform(uniformName = texture.textureGrid.rowCountName, uniformValue = texture.textureGrid.rowCountValue.toFloat())
+                setUniform(uniformName = texture.strengthUniformName, uniformValue = texture.strength)
+            }
+            texture.activateTexture()
+            texture.bind()
         }
     }
 
     protected abstract fun onDrawIndices(indexCount: Int)
     protected abstract fun onDrawVertices(vertexCount: Int)
-
-    override fun onDestroy() {
-        super.onDestroy()
-        shaderComponent.onDestroy()
-    }
 
     private var polygonMode = 0
 
@@ -214,6 +265,51 @@ abstract class RenderSystem : System() {
     protected open fun disableCullFace() {
         if (!isCullFaceEnabled) return
         isCullFaceEnabled = false
+    }
+
+    private var isClippingEnabled = false
+
+    protected open fun enableClipping() {
+        if (isClippingEnabled) return
+        isClippingEnabled = true
+    }
+
+    protected open fun disableClipping() {
+        if (!isClippingEnabled) return
+        isClippingEnabled = false
+    }
+
+    override fun onUpdate() {
+        val reflectionComponent = getSceneComponent<ReflectionSceneComponent>(ReflectionSceneComponent.ID)
+        if (reflectionComponent != null) {
+            reflectionComponent.bind()
+            updateClipping(reflectionComponent.clipping)
+            reflectionComponent.unbind()
+        }
+
+        val refractionComponent = getSceneComponent<RefractionSceneComponent>(RefractionSceneComponent.ID)
+        if (refractionComponent != null) {
+            refractionComponent.bind()
+            updateClipping(refractionComponent.clipping)
+            refractionComponent.unbind()
+        }
+
+        disableClipping()
+
+        super.onUpdate()
+    }
+
+    private fun updateClipping(clipping: UVector4f?) {
+        if (clipping != null) {
+            enableClipping()
+            for (entityGroupId in entityGroups.indices) {
+                val shaderComponent = entityGroups[entityGroupId].getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+                shaderComponent.shaderOwner.setUniform(clipping.name, clipping)
+                onUpdateEntityGroup(entityGroupId)
+            }
+        } else {
+            super.onUpdate()
+        }
     }
 
 }

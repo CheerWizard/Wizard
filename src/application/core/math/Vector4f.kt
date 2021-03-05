@@ -33,6 +33,10 @@ open class Vector4f {
         this.w = w
     }
 
+    fun size(): Int = 4
+
+    fun byteSize(): Int = size() * Float.SIZE_BYTES
+
     /**
      * Calculates the squared length of the vector.
      *

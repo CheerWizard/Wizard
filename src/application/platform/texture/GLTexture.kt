@@ -4,17 +4,22 @@ import application.graphics.texture.Texture
 import application.graphics.texture.TextureData
 import application.graphics.texture.TextureGrid
 import org.lwjgl.opengl.GL30.*
+import java.nio.ByteBuffer
 
 abstract class GLTexture(
     storagePath: String,
-    uniformName: String,
+    samplerUniformName: String,
     textureGrid: TextureGrid = TextureGrid(),
-    detalization: Float = 0f
+    detalization: Float = 0f,
+    strengthUniformName: String,
+    strength: Float = 1f
 ) : Texture(
     storagePath = storagePath,
-    uniformSamplerName = uniformName,
+    samplerUniformName = samplerUniformName,
     textureGrid = textureGrid,
-    detalization = detalization
+    detalization = detalization,
+    strengthUniformName = strengthUniformName,
+    strength = strength
 ) {
 
     override var id: Int = glGenTextures()
@@ -30,11 +35,11 @@ abstract class GLTexture(
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
     )
 
-    override fun onBind() {
+    override fun bind() {
         glBindTexture(type, id)
     }
 
-    override fun onUnbind() {
+    override fun unbind() {
         glBindTexture(type, 0)
     }
 
@@ -47,16 +52,24 @@ abstract class GLTexture(
         glTexParameterf(type, GL_TEXTURE_LOD_BIAS, -detalization)
     }
 
-    override fun create(textureData: TextureData) {
-        glTexImage2D(type, 0, GL_RGBA, textureData.width, textureData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData.sourceBuffer)
+    override fun create(textureSource: ByteBuffer?) {
+        glTexImage2D(type, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureSource)
     }
 
     override fun createFace(textureData: TextureData, face: Int) {
         glTexImage2D(face, 0, GL_RGBA, textureData.width, textureData.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData.sourceBuffer)
     }
 
+    override fun createColor() {
+        glTexImage2D(type, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, null as ByteBuffer?)
+    }
+
+    override fun createDepth() {
+        glTexImage2D(type, 0, GL_DEPTH_COMPONENT32, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, null as ByteBuffer?)
+    }
+
     override fun activateTexture() {
-        glActiveTexture(GL_TEXTURE0 + uniformSamplerValue)
+        glActiveTexture(GL_TEXTURE0 + sampler)
     }
 
     override fun deactivateTexture() {

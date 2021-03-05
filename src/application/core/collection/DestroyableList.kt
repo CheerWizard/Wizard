@@ -17,8 +17,8 @@ open class DestroyableList<T: Destroyable> : ArrayList<T>() {
     }
 
     override fun clear() {
-        for (entity in this) {
-            entity.onDestroy()
+        for (value in this) {
+            value.onDestroy()
         }
         super.clear()
     }

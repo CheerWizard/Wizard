@@ -8,6 +8,10 @@ class Vector2f(
     var y : Float = 0f
 ) {
 
+    fun size(): Int = 2
+
+    fun byteSize(): Int = size() * Float.SIZE_BYTES
+
     fun squaredLength(): Float = x * x + y * y
 
     fun length(): Float = sqrt(squaredLength().toDouble()).toFloat()

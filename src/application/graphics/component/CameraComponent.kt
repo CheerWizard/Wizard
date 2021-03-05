@@ -11,7 +11,7 @@ class CameraComponent(
 ) : Component {
 
     companion object {
-        const val ID : Short = 4
+        const val ID : Short = 3
         private const val DEFAULT_MOVEMENT_SPEED = 0.1f
         private const val DEFAULT_ROTATE_SPEED = 1.5f
         private const val DEFAULT_ZOOM_SPEED = 0.25f

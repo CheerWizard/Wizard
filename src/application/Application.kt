@@ -1,7 +1,6 @@
 package application
 
 import application.core.ecs.Engine
-import application.graphics.obj.ObjParser
 import application.window.Cursor
 import application.window.InputController
 import application.window.Window
@@ -16,7 +15,6 @@ abstract class Application(title: String) :
 
     protected val window: Window = Window(title = title)
     protected abstract val engine: Engine
-    protected abstract val objParser: ObjParser
 
     protected val inputController = InputController()
 
