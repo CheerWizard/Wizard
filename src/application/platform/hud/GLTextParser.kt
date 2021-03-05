@@ -2,7 +2,7 @@ package application.platform.hud
 
 import application.graphics.hud.TextParser
 import application.graphics.texture.Texture
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.VertexBuffer
 import application.platform.texture.GLTexture2d
 import application.platform.vertex.GLVertexBuffer
 

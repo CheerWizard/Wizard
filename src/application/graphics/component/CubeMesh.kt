@@ -1,8 +1,8 @@
 package application.graphics.component
 
-import application.graphics.vertex.IndexBuffer
-import application.graphics.vertex.VertexArray
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.IndexBuffer
+import application.graphics.geometry.VertexArray
+import application.graphics.geometry.VertexBuffer
 
 class CubeMesh(
     vertexArray: VertexArray,

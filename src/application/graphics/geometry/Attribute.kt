@@ -1,4 +1,4 @@
-package application.graphics.vertex
+package application.graphics.geometry
 
 abstract class Attribute(
     var name: String = "",

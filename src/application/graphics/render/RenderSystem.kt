@@ -20,26 +20,19 @@ abstract class RenderSystem : System() {
         projection.apply()
     }
 
-    override fun onCreate() {
-        for (entityGroup in entityGroups) {
-            val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
-            shaderComponent.shaderOwner.onCreate()
-        }
-    }
-
     override fun onPrepareEntityGroup(entityGroupId: Int) {
         val entityGroup = entityGroups[entityGroupId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
+        val meshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
 
-        val meshComponent = entityGroup.getComponent<MeshComponent>(MeshComponent.ID)
-        meshComponent?.let { mesh->
-            mesh.create()
-            for (attribute in mesh.vertexBuffer.getAttributes()) {
-                shaderComponent.shaderOwner.setAttribute(attributeLocation = attribute.location, attributeName = attribute.name)
-            }
+        shaderOwner.onCreate()
+
+        meshComponent.prepare()
+        for (attribute in meshComponent.vertexBuffer.getAttributes()) {
+            shaderOwner.setAttribute(attributeLocation = attribute.location, attributeName = attribute.name)
         }
 
-        shaderComponent.shaderOwner.run {
+        shaderOwner.run {
             onPrepare()
             putUniformName(projection.name)
         }
@@ -51,13 +44,13 @@ abstract class RenderSystem : System() {
 
     protected open fun prepareComponents(entityGroupId: Int) {
         val entityGroup = entityGroups[entityGroupId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
 
         prepareSceneComponents(entityGroupId)
 
         val cameraComponent = entityGroup.getComponent<CameraComponent>(CameraComponent.ID)
         if (cameraComponent != null) {
-            shaderComponent.shaderOwner.putUniformName(cameraComponent.transformMatrix4f.name)
+            shaderOwner.putUniformName(cameraComponent.transformMatrix4f.name)
         }
 
         val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
@@ -67,42 +60,42 @@ abstract class RenderSystem : System() {
     }
 
     private fun prepareSceneComponents(entityGroupId: Int) {
-        val shaderComponent = entityGroups[entityGroupId].getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroups[entityGroupId].getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
         val reflectionComponent = getSceneComponent<ReflectionSceneComponent>(ReflectionSceneComponent.ID)
         val refractionComponent = getSceneComponent<RefractionSceneComponent>(RefractionSceneComponent.ID)
 
         if (reflectionComponent != null) {
             val clipping = reflectionComponent.clipping
             if (clipping != null) {
-                shaderComponent.shaderOwner.putUniformName(clipping.name)
+                shaderOwner.putUniformName(clipping.name)
             }
         }
 
         if (refractionComponent != null) {
             val clipping = refractionComponent.clipping
             if (clipping != null) {
-                shaderComponent.shaderOwner.putUniformName(clipping.name)
+                shaderOwner.putUniformName(clipping.name)
             }
         }
     }
 
     private fun prepareMaterial(entityGroupId: Int, materialComponent: MaterialComponent) {
         val entityGroup = entityGroups[entityGroupId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
 
         val materialColor = materialComponent.color
         if (materialColor != null) {
-            shaderComponent.shaderOwner.putUniformName(materialColor.name)
+            shaderOwner.putUniformName(materialColor.name)
         }
 
         val materialParallax = materialComponent.parallax
         if (materialParallax != null) {
-            shaderComponent.shaderOwner.putUniformName(materialParallax.offsetUniformName)
+            shaderOwner.putUniformName(materialParallax.offsetUniformName)
         }
 
         for (texture in materialComponent.textures) {
-            shaderComponent.shaderOwner.run {
-                putUniformName(texture.samplerUniformName)
+            shaderOwner.run {
+                putUniformName(texture.slotUniformName)
                 putUniformName(texture.textureGrid.gridOffsetName)
                 putUniformName(texture.textureGrid.rowCountName)
                 putUniformName(texture.strengthUniformName)
@@ -113,9 +106,6 @@ abstract class RenderSystem : System() {
     override fun onPrepareEntity(entityGroupId: Int, entityId: Int) {
         val entityGroup = entityGroups[entityGroupId]
         val entity = entityGroup.entities[entityId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
-
-        shaderComponent.shaderOwner.putUniformName(entity.transformation.name)
 
         val materialComponent = entity.materialComponent
         if (materialComponent != null) {
@@ -161,13 +151,13 @@ abstract class RenderSystem : System() {
 
     protected open fun updateComponents(entityGroupId: Int) {
         val entityGroup = entityGroups[entityGroupId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
 
-        shaderComponent.shaderOwner.setUniform(projection.name, projection)
+        shaderOwner.setUniform(projection.name, projection)
 
         val cameraComponent = entityGroup.getComponent<CameraComponent>(CameraComponent.ID)
         if (cameraComponent != null) {
-            shaderComponent.shaderOwner.setUniform(cameraComponent.transformMatrix4f.name, cameraComponent.transformMatrix4f)
+            shaderOwner.setUniform(cameraComponent.transformMatrix4f.name, cameraComponent.transformMatrix4f)
         }
 
         val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
@@ -193,7 +183,7 @@ abstract class RenderSystem : System() {
 
         for (texture in materialComponent.textures) {
             shaderComponent.shaderOwner.run {
-                setUniform(uniformName = texture.samplerUniformName, uniformValue = texture.sampler)
+                setUniform(uniformName = texture.slotUniformName, uniformValue = texture.slot)
                 setUniform(uniformName = texture.textureGrid.gridOffsetName, uniformValue = texture.textureGrid.gridOffset)
                 setUniform(uniformName = texture.textureGrid.rowCountName, uniformValue = texture.textureGrid.rowCountValue.toFloat())
                 setUniform(uniformName = texture.strengthUniformName, uniformValue = texture.strength)
@@ -206,10 +196,9 @@ abstract class RenderSystem : System() {
     override fun onUpdateEntity(entityGroupId: Int, entityId: Int) {
         val entityGroup = entityGroups[entityGroupId]
         val entity = entityGroup.entities[entityId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val meshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
 
-        val entityTransformation = entity.transformation
-        shaderComponent.shaderOwner.setUniform(entityTransformation.name, entityTransformation)
+        meshComponent.vertexBuffer.transformMesh(meshId = entityId, matrix4f = entity.transformation)
 
         val materialComponent = entity.materialComponent
         if (materialComponent != null) {
@@ -220,22 +209,22 @@ abstract class RenderSystem : System() {
     private fun updateEntityMaterial(entityGroupId: Int, entityId: Int) {
         val entityGroup = entityGroups[entityGroupId]
         val entity = entityGroup.entities[entityId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
         val materialComponent = entity.materialComponent as MaterialComponent
 
         val materialColor = materialComponent.color
         if (materialColor != null) {
-            shaderComponent.shaderOwner.setUniform(materialColor.name, materialColor)
+            shaderOwner.setUniform(materialColor.name, materialColor)
         }
 
         val materialParallax = materialComponent.parallax
         if (materialParallax != null) {
-            shaderComponent.shaderOwner.setUniform(materialParallax.offsetUniformName, materialParallax.offset)
+            shaderOwner.setUniform(materialParallax.offsetUniformName, materialParallax.offset)
         }
 
         for (texture in materialComponent.textures) {
-            shaderComponent.shaderOwner.run {
-                setUniform(uniformName = texture.samplerUniformName, uniformValue = texture.sampler)
+            shaderOwner.run {
+                setUniform(uniformName = texture.slotUniformName, uniformValue = texture.slot)
                 setUniform(uniformName = texture.textureGrid.gridOffsetName, uniformValue = texture.textureGrid.gridOffset)
                 setUniform(uniformName = texture.textureGrid.rowCountName, uniformValue = texture.textureGrid.rowCountValue.toFloat())
                 setUniform(uniformName = texture.strengthUniformName, uniformValue = texture.strength)

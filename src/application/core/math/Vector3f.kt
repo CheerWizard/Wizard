@@ -12,12 +12,11 @@ open class Vector3f(
 ) {
 
     companion object {
-        private val BUFFER = BufferUtils.createFloatBuffer(3)
+        const val SIZE = 3
+        private val BUFFER = BufferUtils.createFloatBuffer(SIZE)
     }
 
-    fun size(): Int = 3
-
-    fun byteSize(): Int = size() * Float.SIZE_BYTES
+    fun byteSize(): Int = SIZE * Float.SIZE_BYTES
 
     fun squaredLength(): Float = x * x + y * y + z * z
 

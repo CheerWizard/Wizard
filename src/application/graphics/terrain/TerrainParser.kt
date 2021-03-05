@@ -1,7 +1,7 @@
 package application.graphics.terrain
 
 import application.graphics.texture.TextureData
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.VertexBuffer
 import org.joml.Vector3f
 import java.util.*
 import kotlin.math.abs

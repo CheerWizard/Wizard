@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 
 abstract class Texture(
     private val storagePath: String = STORAGE_PATH,
-    var samplerUniformName: String,
+    var slotUniformName: String,
     var strengthUniformName: String,
     val textureGrid: TextureGrid = TextureGrid(),
     val detalization: Float = 0f,
@@ -14,6 +14,7 @@ abstract class Texture(
 
     companion object {
         const val STORAGE_PATH = "res/textures"
+        const val MAX_SLOTS = 8
     }
 
     abstract var id: Int
@@ -21,9 +22,7 @@ abstract class Texture(
     var width: Int = 0
     var height: Int = 0
 
-    var sampler = 0
-
-    var transparency = 0.5f
+    var slot = 0
 
     protected abstract val faces: IntArray
 

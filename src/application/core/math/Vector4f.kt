@@ -8,6 +8,10 @@ open class Vector4f {
     var z: Float
     var w: Float
 
+    companion object {
+        const val SIZE = 4
+    }
+
     /**
      * Creates a default 4-tuple vector with all values set to 0.
      */
@@ -33,9 +37,7 @@ open class Vector4f {
         this.w = w
     }
 
-    fun size(): Int = 4
-
-    fun byteSize(): Int = size() * Float.SIZE_BYTES
+    fun byteSize(): Int = SIZE * Float.SIZE_BYTES
 
     /**
      * Calculates the squared length of the vector.
@@ -159,4 +161,10 @@ open class Vector4f {
         buffer.put(x).put(y).put(z).put(w)
         buffer.flip()
     }
+
+    fun mul(matrix4f: Matrix4f) : Vector4f {
+
+        return this
+    }
+
 }

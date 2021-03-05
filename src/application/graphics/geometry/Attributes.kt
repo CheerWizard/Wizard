@@ -1,4 +1,4 @@
-package application.graphics.vertex
+package application.graphics.geometry
 
 class Attribute4f : Attribute() {
     override fun size(): Int = 4

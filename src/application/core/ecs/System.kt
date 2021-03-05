@@ -14,7 +14,6 @@ abstract class System(
     }
 
     abstract fun getId(): Byte
-    abstract fun onCreate()
 
     open fun onPrepare() {
         for (entityGroupId in entityGroups.indices) {

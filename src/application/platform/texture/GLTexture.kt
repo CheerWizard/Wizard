@@ -15,7 +15,7 @@ abstract class GLTexture(
     strength: Float = 1f
 ) : Texture(
     storagePath = storagePath,
-    samplerUniformName = samplerUniformName,
+    slotUniformName = samplerUniformName,
     textureGrid = textureGrid,
     detalization = detalization,
     strengthUniformName = strengthUniformName,
@@ -69,7 +69,7 @@ abstract class GLTexture(
     }
 
     override fun activateTexture() {
-        glActiveTexture(GL_TEXTURE0 + sampler)
+        glActiveTexture(GL_TEXTURE0 + slot)
     }
 
     override fun deactivateTexture() {

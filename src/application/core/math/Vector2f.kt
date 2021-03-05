@@ -8,9 +8,11 @@ class Vector2f(
     var y : Float = 0f
 ) {
 
-    fun size(): Int = 2
+    companion object {
+        const val SIZE = 2
+    }
 
-    fun byteSize(): Int = size() * Float.SIZE_BYTES
+    fun byteSize(): Int = SIZE * Float.SIZE_BYTES
 
     fun squaredLength(): Float = x * x + y * y
 

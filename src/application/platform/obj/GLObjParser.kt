@@ -1,7 +1,7 @@
 package application.platform.obj
 
 import application.graphics.obj.ObjParser
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.VertexBuffer
 import application.platform.vertex.GLVertexBuffer
 
 class GLObjParser : ObjParser() {

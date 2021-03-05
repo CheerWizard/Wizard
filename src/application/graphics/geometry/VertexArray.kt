@@ -1,4 +1,4 @@
-package application.graphics.vertex
+package application.graphics.geometry
 
 import application.core.Destroyable
 

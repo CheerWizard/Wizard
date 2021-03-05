@@ -1,10 +1,16 @@
 package application.platform.vertex
 
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.VertexBuffer
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL30.*
 
-class GLVertexBuffer(capacity: Int = DEFAULT_CAPACITY) : VertexBuffer(capacity = capacity) {
+class GLVertexBuffer(
+    totalMeshCount: Int = DEFAULT_TOTAL_MESH_COUNT,
+    averageMeshSize: Int = DEFAULT_AVERAGE_MESH_SIZE
+) : VertexBuffer(
+    totalMeshCount = totalMeshCount,
+    averageMeshSize = averageMeshSize
+) {
 
     companion object {
         const val FILL_MODE = GL_FILL
@@ -16,7 +22,7 @@ class GLVertexBuffer(capacity: Int = DEFAULT_CAPACITY) : VertexBuffer(capacity =
 
     override var id: Int = glGenBuffers()
 
-    override fun create() {
+    override fun prepare() {
         glBindBuffer(GL_ARRAY_BUFFER, id)
         glBufferData(GL_ARRAY_BUFFER, data, GL_DYNAMIC_DRAW)
         createAttributePointers()
@@ -24,24 +30,27 @@ class GLVertexBuffer(capacity: Int = DEFAULT_CAPACITY) : VertexBuffer(capacity =
 
     private fun createAttributePointers() {
         var totalByteSize = 0
-        for (attribute in attributes.values) {
+        for (attribute in attributes) {
             totalByteSize += attribute.byteSize()
         }
 
-        for (attribute in attributes.values) {
-            val attributePointer = BufferUtils.createFloatBuffer(attribute.size())
+        var offset = 0
+        for (i in attributes.indices) {
+            val attribute = attributes[i]
+            val attributePointer = BufferUtils.createFloatBuffer(offset)
             glVertexAttribPointer(attribute.location, attribute.size(), GL_FLOAT, false, totalByteSize, attributePointer)
+            offset += attribute.byteSize()
         }
     }
 
     override fun enableAttributes() {
-        for (attribute in attributes.values) {
+        for (attribute in attributes) {
             glEnableVertexAttribArray(attribute.location)
         }
     }
 
     override fun disableAttributes() {
-        for (attribute in attributes.values) {
+        for (attribute in attributes) {
             glDisableVertexAttribArray(attribute.location)
         }
     }

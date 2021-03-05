@@ -1,9 +1,9 @@
 package application.graphics.component
 
 import application.core.ecs.Component
-import application.graphics.vertex.IndexBuffer
-import application.graphics.vertex.VertexArray
-import application.graphics.vertex.VertexBuffer
+import application.graphics.geometry.IndexBuffer
+import application.graphics.geometry.VertexArray
+import application.graphics.geometry.VertexBuffer
 
 open class MeshComponent(
     var vertexArray: VertexArray,
@@ -27,10 +27,10 @@ open class MeshComponent(
 
     override fun getId(): Short = ID
 
-    fun create() {
+    fun prepare() {
         bindVertexArray()
-        createIndexBuffer()
-        createVertexBuffer()
+        prepareIndexBuffer()
+        prepareVertexBuffer()
         unbindVertexArray()
     }
 
@@ -50,8 +50,8 @@ open class MeshComponent(
         vertexArray.unbind()
     }
 
-    fun createIndexBuffer() {
-        indexBuffer.create()
+    fun prepareIndexBuffer() {
+        indexBuffer.prepare()
     }
 
     fun bindIndexBuffer() {
@@ -62,8 +62,8 @@ open class MeshComponent(
         indexBuffer.unbind()
     }
 
-    fun createVertexBuffer() {
-        vertexBuffer.create()
+    fun prepareVertexBuffer() {
+        vertexBuffer.prepare()
     }
 
     fun bindVertexBuffer() {

@@ -27,7 +27,6 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
 
     override fun run() {
         onCreate()
-        onPrepare()
         while (editor.isOpen()) {
             onUpdate()
         }
@@ -39,13 +38,9 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
         createNativeCapabilities()
         editor.onCreate()
         for (system in systems.values) {
-            system.onCreate()
-        }
-    }
-
-    protected open fun onPrepare() {
-        for (system in systems.values) {
-            system.onPrepare()
+            system.run {
+                onPrepare()
+            }
         }
     }
 

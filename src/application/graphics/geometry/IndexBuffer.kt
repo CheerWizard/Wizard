@@ -1,4 +1,4 @@
-package application.graphics.vertex
+package application.graphics.geometry
 
 import application.core.Destroyable
 import org.lwjgl.BufferUtils
@@ -36,7 +36,7 @@ abstract class IndexBuffer(capacity: Int) : Destroyable {
         data.clear()
     }
 
-    abstract fun create()
+    abstract fun prepare()
     abstract fun bind()
     abstract fun unbind()
 

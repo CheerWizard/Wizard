@@ -1,6 +1,6 @@
 package application.platform.vertex
 
-import application.graphics.vertex.VertexArray
+import application.graphics.geometry.VertexArray
 import org.lwjgl.opengl.GL30.*
 
 class GLVertexArray : VertexArray() {

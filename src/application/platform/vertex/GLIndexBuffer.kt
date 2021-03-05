@@ -1,13 +1,13 @@
 package application.platform.vertex
 
-import application.graphics.vertex.IndexBuffer
+import application.graphics.geometry.IndexBuffer
 import org.lwjgl.opengl.GL15.*
 
 class GLIndexBuffer(capacity: Int = DEFAULT_CAPACITY) : IndexBuffer(capacity = capacity) {
 
     override var id: Int = glGenBuffers()
 
-    override fun create() {
+    override fun prepare() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, data, GL_DYNAMIC_DRAW)
     }

@@ -19,7 +19,7 @@ class MaterialComponent(
 
     fun addTexture(texture: Texture): Int {
         textures.add(texture.apply {
-            sampler = textures.size
+            slot = textures.size
         })
         return textures.size - 1
     }
