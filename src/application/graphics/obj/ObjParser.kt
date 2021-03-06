@@ -26,7 +26,6 @@ abstract class ObjParser {
 
     protected var textureArray = FloatArray(0)
     protected var normalsArray = FloatArray(0)
-    protected var tangentsArray = FloatArray(0)
 
     private fun clean() {
         indices.clear()

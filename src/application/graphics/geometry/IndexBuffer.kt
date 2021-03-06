@@ -4,15 +4,19 @@ import application.core.Destroyable
 import org.lwjgl.BufferUtils
 import java.nio.IntBuffer
 
-abstract class IndexBuffer(capacity: Int) : Destroyable {
+abstract class IndexBuffer(
+    totalMeshCount: Int = DEFAULT_TOTAL_MESH_COUNT,
+    averageMeshIndexCount: Int = AVERAGE_MESH_INDEX_COUNT
+) : Destroyable {
 
     companion object {
-        const val DEFAULT_CAPACITY = 1024 / Int.SIZE_BYTES
+        const val DEFAULT_TOTAL_MESH_COUNT = 100
+        const val AVERAGE_MESH_INDEX_COUNT = Mesh.MAX_SIZE
     }
 
     abstract var id: Int
 
-    var data: IntBuffer = BufferUtils.createIntBuffer(capacity)
+    var data: IntBuffer = BufferUtils.createIntBuffer(totalMeshCount * averageMeshIndexCount)
 
     fun capacity(): Int = data.capacity()
 
