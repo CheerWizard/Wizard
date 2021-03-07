@@ -6,7 +6,7 @@ import application.core.ecs.EntityGroup
 import application.core.math.TransformMatrix4f
 import application.core.math.Vector3f
 import application.graphics.component.LightComponent
-import application.graphics.component.MeshComponent
+import application.graphics.mesh.MeshComponent
 import application.graphics.component.SpecularComponent
 import application.graphics.material.MaterialComponent
 import application.graphics.material.Parallax
@@ -20,9 +20,9 @@ import application.platform.shader.GLFragmentShader
 import application.platform.shader.GLShaderOwner
 import application.platform.shader.GLVertexShader
 import application.platform.texture.GLTexture2d
-import application.platform.vertex.GLIndexBuffer
-import application.platform.vertex.GLVertexArray
-import application.platform.vertex.GLVertexBuffer
+import application.platform.geometry.GLIndexBuffer
+import application.platform.geometry.GLVertexArray
+import application.platform.geometry.GLVertexBuffer
 import org.lwjgl.glfw.GLFW
 
 class MyApplication : GLApplication(title = "MyApplication") {
@@ -42,107 +42,107 @@ class MyApplication : GLApplication(title = "MyApplication") {
     override fun onCreate() {
         super.onCreate()
 
-        val cubeShaderComponent = ShaderComponent(
-            shaderOwner = GLShaderOwner(
-                vertexShader = GLVertexShader("normal_mapping_vertex.glsl").readFile(),
-                fragmentShader = GLFragmentShader("normal_mapping_fragment.glsl").readFile()
-            )
-        )
-
-        val textureGrid = TextureGrid(
-            gridOffsetName = "textureGridOffset",
-            rowCountName = "textureGridRowCount",
-        )
-
-        val waterDiffuse = GLTexture2d(
-            samplerUniformName = "diffuseSampler1",
-            textureGrid = textureGrid,
-            detalization = 5f,
-            strengthUniformName = "diffuseStrength1"
-        ).create("water_diffuse.jpg")
-
-        val waterNormal = GLTexture2d(
-            samplerUniformName = "normalSampler",
-            textureGrid = textureGrid,
-            strengthUniformName = "normalStrength"
-        ).create("water_normal.jpg")
-
-        val rockSpecular = GLTexture2d(
-            samplerUniformName = "specularSampler",
-            textureGrid = textureGrid,
-            strengthUniformName = "specularStrength"
-        ).create("rock_specular.png")
-
-        val waterParallax = GLTexture2d(
-            samplerUniformName = "parallaxSampler",
-            textureGrid = textureGrid,
-            strengthUniformName = "parallaxStrength",
-            strength = 0.35f
-        ).create("water_parallax.png")
-
-        val grass = GLTexture2d(
-            samplerUniformName = "diffuseSampler2",
-            textureGrid = textureGrid,
-            detalization = 5f,
-            strengthUniformName = "diffuseStrength2",
-            strength = 0.25f
-        ).create("grass2.jpg")
-
-        val parallax = Parallax(
-            offsetUniformName = "parallaxOffset",
-            offset = 0f,
-        )
-
-        val cubeTextureComponent = MaterialComponent().apply {
-            addTexture(waterDiffuse)
-            addTexture(waterNormal)
-            addTexture(waterParallax)
-            addTexture(rockSpecular)
-            this.parallax = parallax
-        }
-
-        val specularComponent = SpecularComponent(
-            reflectivityUniformName = "reflectivity",
-            shiningUniformName = "shining",
-            shining = 10f,
-            brightnessUniformName = "brightness",
-            brightness = 0.75f,
-            reflectivity = 4f
-        )
-
-        terrainParser.apply {
-            gridCount = 10
-            parseHeightMap("rock_height.png")
-        }
-
-        val vertexBuffer = terrainParser.getVertexBuffer("cubeVertices")
-        val textureBuffer = terrainParser.getTextureBuffer("cubeTextures")
-        val normalBuffer = terrainParser.getNormalBuffer("cubeNormals")
-        val indices = terrainParser.getIndices()
-        val tangentBuffer = terrainParser.getVertexBuffer("cubeTangents")
-
-        val cubeMeshComponent = MeshComponent(
-            vertexArray = GLVertexArray(),
-            vertexBuffer = GLVertexBuffer(),
-            indexBuffer = GLIndexBuffer()
-        )
-
-        val plate = EntityGroup().apply {
-            putComponent(cameraComponent)
-            putComponent(cubeShaderComponent)
-            putComponent(cubeMeshComponent)
-            putComponent(cubeTextureComponent)
-            putComponent(sunLightComponent)
-            putComponent(specularComponent)
-            addEntity(Entity(
-                transformation = TransformMatrix4f(
-                    name = "cubeTransform",
-                    scalar = Vector3f(x = 10f, y = 1f, z = 10f)
-                )
-            ))
-        }
-
-        plateId = engine.addEntityGroup(systemId = Render3dSystem.ID, entityGroup = plate)
+//        val cubeShaderComponent = ShaderComponent(
+//            shaderOwner = GLShaderOwner(
+//                vertexShader = GLVertexShader("normal_mapping_vertex.glsl").readFile(),
+//                fragmentShader = GLFragmentShader("normal_mapping_fragment.glsl").readFile()
+//            )
+//        )
+//
+//        val textureGrid = TextureGrid(
+//            gridOffsetName = "textureGridOffset",
+//            rowCountName = "textureGridRowCount",
+//        )
+//
+//        val waterDiffuse = GLTexture2d(
+//            samplerUniformName = "diffuseSampler1",
+//            textureGrid = textureGrid,
+//            detalization = 5f,
+//            strengthUniformName = "diffuseStrength1"
+//        ).create("water_diffuse.jpg")
+//
+//        val waterNormal = GLTexture2d(
+//            samplerUniformName = "normalSampler",
+//            textureGrid = textureGrid,
+//            strengthUniformName = "normalStrength"
+//        ).create("water_normal.jpg")
+//
+//        val rockSpecular = GLTexture2d(
+//            samplerUniformName = "specularSampler",
+//            textureGrid = textureGrid,
+//            strengthUniformName = "specularStrength"
+//        ).create("rock_specular.png")
+//
+//        val waterParallax = GLTexture2d(
+//            samplerUniformName = "parallaxSampler",
+//            textureGrid = textureGrid,
+//            strengthUniformName = "parallaxStrength",
+//            strength = 0.35f
+//        ).create("water_parallax.png")
+//
+//        val grass = GLTexture2d(
+//            samplerUniformName = "diffuseSampler2",
+//            textureGrid = textureGrid,
+//            detalization = 5f,
+//            strengthUniformName = "diffuseStrength2",
+//            strength = 0.25f
+//        ).create("grass2.jpg")
+//
+//        val parallax = Parallax(
+//            offsetUniformName = "parallaxOffset",
+//            offset = 0f,
+//        )
+//
+//        val cubeTextureComponent = MaterialComponent().apply {
+//            addTexture(waterDiffuse)
+//            addTexture(waterNormal)
+//            addTexture(waterParallax)
+//            addTexture(rockSpecular)
+//            this.parallax = parallax
+//        }
+//
+//        val specularComponent = SpecularComponent(
+//            reflectivityUniformName = "reflectivity",
+//            shiningUniformName = "shining",
+//            shining = 10f,
+//            brightnessUniformName = "brightness",
+//            brightness = 0.75f,
+//            reflectivity = 4f
+//        )
+//
+//        terrainParser.apply {
+//            gridCount = 10
+//            parseHeightMap("rock_height.png")
+//        }
+//
+//        val vertexBuffer = terrainParser.getVertexBuffer("cubeVertices")
+//        val textureBuffer = terrainParser.getTextureBuffer("cubeTextures")
+//        val normalBuffer = terrainParser.getNormalBuffer("cubeNormals")
+//        val indices = terrainParser.getIndices()
+//        val tangentBuffer = terrainParser.getVertexBuffer("cubeTangents")
+//
+//        val cubeMeshComponent = MeshComponent(
+//            vertexArray = GLVertexArray(),
+//            vertexBuffer = GLVertexBuffer(),
+//            indexBuffer = GLIndexBuffer()
+//        )
+//
+//        val plate = EntityGroup().apply {
+//            putComponent(cameraComponent)
+//            putComponent(cubeShaderComponent)
+//            putComponent(cubeMeshComponent)
+//            putComponent(cubeTextureComponent)
+//            putComponent(sunLightComponent)
+//            putComponent(specularComponent)
+//            addEntity(Entity(
+//                transformation = TransformMatrix4f(
+//                    name = "cubeTransform",
+//                    scalar = Vector3f(x = 10f, y = 1f, z = 10f)
+//                )
+//            ))
+//        }
+//
+//        plateId = engine.addEntityGroup(systemId = Render3dSystem.ID, entityGroup = plate)
     }
 
     private var plateId = 0
@@ -166,7 +166,6 @@ class MyApplication : GLApplication(title = "MyApplication") {
             entityGroupId = plateId,
             componentId = MeshComponent.ID
         )?.apply {
-            vertexBuffer.polygonMode = polygonMode
         }
     }
 

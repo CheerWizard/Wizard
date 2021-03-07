@@ -6,7 +6,7 @@ import org.joml.Vector3f
 import java.util.*
 import kotlin.math.abs
 
-abstract class TerrainParser {
+class TerrainParser {
 
     companion object {
         private const val STORAGE_PATH = "res/terrain"
@@ -41,10 +41,6 @@ abstract class TerrainParser {
     }
 
     fun getIndices(): IntArray = indices
-
-    abstract fun getVertexBuffer(vertexName: String) : VertexBuffer
-    abstract fun getTextureBuffer(vertexName: String) : VertexBuffer
-    abstract fun getNormalBuffer(vertexName: String) : VertexBuffer
 
     fun parseHeightMap(fileName: String) {
         clear()

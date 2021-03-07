@@ -3,13 +3,12 @@ package application.graphics.obj
 import application.core.collection.Vector3fList
 import application.core.math.Vector2f
 import application.core.math.Vector3f
-import application.graphics.geometry.VertexBuffer
 import java.io.BufferedReader
 import java.io.FileReader
 import java.io.IOException
 import kotlin.system.exitProcess
 
-abstract class ObjParser {
+class ObjParser {
 
     companion object {
         private const val STORAGE_PATH = "res/obj"
@@ -20,22 +19,30 @@ abstract class ObjParser {
     }
 
     private val indices = ArrayList<Int>()
-    protected val vertices = Vector3fList()
-    private val textures = ArrayList<Vector2f>()
-    private val normals = Vector3fList()
+    private val positions = Vector3fList()
+    private var textureCoordinates = FloatArray(0)
+    private var normals = FloatArray(0)
 
-    protected var textureArray = FloatArray(0)
-    protected var normalsArray = FloatArray(0)
+    private val tempTextureCoordinates = ArrayList<Vector2f>()
+    private val tempNormals = Vector3fList()
 
-    private fun clean() {
+    private fun clear() {
         indices.clear()
-        vertices.clear()
-        textures.clear()
-        normals.clear()
+        positions.clear()
+        textureCoordinates = FloatArray(0)
+        normals = FloatArray(0)
     }
 
+    fun getIndices(): IntArray = indices.toIntArray()
+
+    fun getPositions(): Vector3fList = positions
+
+    fun getTextureCoordinates(): FloatArray = textureCoordinates
+
+    fun getNormals(): FloatArray = normals
+
     fun parse(fileName: String) {
-        clean()
+        clear()
 
         try {
             val reader = BufferedReader(FileReader("$STORAGE_PATH/$fileName"))
@@ -49,20 +56,20 @@ abstract class ObjParser {
                 }
 
                 when (tokens[0]) {
-                    VERTEX_TOKEN -> vertices.add(
+                    VERTEX_TOKEN -> positions.add(
                         Vector3f(
                             x = tokens[1].toFloat(),
                             y = tokens[2].toFloat(),
                             z = tokens[3].toFloat()
                         )
                     )
-                    TEXTURE_TOKEN -> textures.add(
+                    TEXTURE_TOKEN -> tempTextureCoordinates.add(
                         Vector2f(
                             x = tokens[1].toFloat(),
                             y = tokens[2].toFloat()
                         )
                     )
-                    NORMAL_TOKEN -> normals.add(
+                    NORMAL_TOKEN -> tempNormals.add(
                         Vector3f(
                             x = tokens[1].toFloat(),
                             y = tokens[2].toFloat(),
@@ -70,8 +77,8 @@ abstract class ObjParser {
                         )
                     )
                     INDEX_TOKEN -> {
-                        textureArray = FloatArray(vertices.size * 2)
-                        normalsArray = FloatArray(vertices.size * 3)
+                        textureCoordinates = FloatArray(positions.size * 2)
+                        normals = FloatArray(positions.size * 3)
                         parseIndices(line as String)
                         break
                     }
@@ -87,15 +94,15 @@ abstract class ObjParser {
             System.err.println("Error occurs during reading the file $fileName")
             e.printStackTrace()
             exitProcess(-1)
+        } finally {
+            clearTemporaryData()
         }
     }
 
-    fun getIndices(): IntArray = indices.toIntArray()
-
-    abstract fun createVertexBuffer(name: String): VertexBuffer
-    abstract fun createTextureBuffer(name: String): VertexBuffer
-    abstract fun createNormalBuffer(name: String): VertexBuffer
-    abstract fun createTangentsBuffer(name: String): VertexBuffer
+    private fun clearTemporaryData() {
+        tempTextureCoordinates.clear()
+        tempNormals.clear()
+    }
 
     private fun parseIndices(indicesLine: String) {
         val tokens = indicesLine.tokenize(' ')
@@ -109,17 +116,17 @@ abstract class ObjParser {
 
             this.indices.add(vertexIndex)
 
-            if (textures.isNotEmpty()) {
-                val texture = textures[textureIndex]
-                textureArray[vertexIndex * 2] = texture.x
-                textureArray[vertexIndex * 2 + 1] = texture.y
+            if (tempTextureCoordinates.isNotEmpty()) {
+                val texture = tempTextureCoordinates[textureIndex]
+                textureCoordinates[vertexIndex * 2] = texture.x
+                textureCoordinates[vertexIndex * 2 + 1] = texture.y
             }
 
-            if (normals.isNotEmpty()) {
-                val normal = normals[normalIndex]
-                normalsArray[vertexIndex * 3] = normal.x
-                normalsArray[vertexIndex * 3 + 1] = normal.y
-                normalsArray[vertexIndex * 3 + 2] = normal.z
+            if (tempNormals.isNotEmpty()) {
+                val normal = tempNormals[normalIndex]
+                normals[vertexIndex * 3] = normal.x
+                normals[vertexIndex * 3 + 1] = normal.y
+                normals[vertexIndex * 3 + 2] = normal.z
             }
         }
     }

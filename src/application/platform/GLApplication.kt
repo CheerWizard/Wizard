@@ -6,27 +6,29 @@ import application.core.ecs.EntityGroup
 import application.core.math.TransformMatrix4f
 import application.core.math.Vector3f
 import application.graphics.component.CameraComponent
-import application.graphics.component.MeshComponent
+import application.graphics.geometry.Attribute2f
+import application.graphics.geometry.Attribute3f
+import application.graphics.material.MaterialBuffer
+import application.graphics.mesh.MeshComponent
 import application.graphics.material.MaterialComponent
+import application.graphics.mesh.MeshBuffer
 import application.graphics.obj.ObjParser
 import application.graphics.render.Render3dSystem
 import application.graphics.shader.ShaderComponent
 import application.graphics.terrain.TerrainParser
-import application.platform.obj.GLObjParser
 import application.platform.shader.GLFragmentShader
 import application.platform.shader.GLShaderOwner
 import application.platform.shader.GLVertexShader
-import application.platform.terrain.GLTerrainParser
 import application.platform.texture.GLTextureCubeMap
-import application.platform.vertex.GLIndexBuffer
-import application.platform.vertex.GLVertexArray
-import application.platform.vertex.GLVertexBuffer
+import application.platform.geometry.GLIndexBuffer
+import application.platform.geometry.GLVertexArray
+import application.platform.geometry.GLVertexBuffer
 import org.lwjgl.glfw.GLFW
 
 abstract class GLApplication(title: String = "OpenGL") : Application(title = title) {
 
-    protected val objParser: ObjParser = GLObjParser()
-    protected val terrainParser: TerrainParser = GLTerrainParser()
+    protected val objParser: ObjParser = ObjParser()
+    protected val terrainParser: TerrainParser = TerrainParser()
 
     protected open lateinit var cameraComponent: CameraComponent
 
@@ -109,34 +111,58 @@ abstract class GLApplication(title: String = "OpenGL") : Application(title = tit
             size, -size,  size
         )
 
+        val meshBuffer = MeshBuffer(
+                positionBuffer = GLVertexBuffer(
+                        attribute = Attribute3f(
+                                name = "position",
+                                location = 0
+                        )
+                ),
+                indexBuffer = GLIndexBuffer()
+        ).apply {
+            normalsBuffer = GLVertexBuffer(
+                    attribute = Attribute3f(
+                            name = "normal",
+                            location = 1
+                    )
+            )
+        }
+
         val meshComponent = MeshComponent(
-            vertexArray = GLVertexArray(),
-            vertexBuffer = GLVertexBuffer(),
-            indexBuffer = GLIndexBuffer()
+            vertexArray = GLVertexArray()
+        ).apply {
+            addMeshBuffer(meshBuffer)
+        }
+
+        val materialBuffer = MaterialBuffer(
+                coordinatesBuffer = GLVertexBuffer(
+                        attribute = Attribute2f(
+                                name = "coordinate",
+                                location = 2
+                        )
+                ),
+                textureBuffer =  GLTextureCubeMap(
+                        storagePath = "res/skybox"
+                ).create(
+                        arrayOf(
+                                "right.png",
+                                "left.png",
+                                "top.png",
+                                "bottom.png",
+                                "back.png",
+                                "front.png",
+                        )
+                )
         )
 
         val textureComponent = MaterialComponent().apply {
-            addTexture(
-                GLTextureCubeMap(
-                    uniformName = "skyboxCubeSampler",
-                    storagePath = "res/skybox"
-                ).create(
-                    arrayOf(
-                        "right.png",
-                        "left.png",
-                        "top.png",
-                        "bottom.png",
-                        "back.png",
-                        "front.png",
-                    )
-                )
-            )
+            addMaterialBuffer(materialBuffer)
         }
 
         val shaderComponent = ShaderComponent(
             shaderOwner = GLShaderOwner(
-                vertexShader = GLVertexShader("skybox_vertex.glsl").readFile(),
-                fragmentShader = GLFragmentShader("skybox_fragment.glsl").readFile()
+                vertexShader = GLVertexShader("cube_vertex.glsl").readFile(),
+                fragmentShader = GLFragmentShader("cube_fragment.glsl").readFile()
             )
         )
 
@@ -148,7 +174,6 @@ abstract class GLApplication(title: String = "OpenGL") : Application(title = tit
             addEntity(
                 Entity(
                     transformation = TransformMatrix4f(
-                        name = "skyboxTransform",
                         scalar = Vector3f(x = 500f, y = 500f, z = 500f)
                     )
                 )

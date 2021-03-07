@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL30.*
 
 class GLHudSystem(screenHeight: Float, screenWidth: Float) : HudSystem(screenHeight = screenHeight, screenWidth = screenWidth) {
 
-    override fun onDrawIndices(indexCount: Int) {
+    override fun draw(indexCount: Int) {
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0)
     }
 

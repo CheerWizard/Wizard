@@ -1,4 +1,4 @@
-package application.platform.vertex
+package application.platform.geometry
 
 import application.graphics.geometry.VertexArray
 import org.lwjgl.opengl.GL30.*

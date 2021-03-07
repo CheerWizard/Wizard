@@ -8,9 +8,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="lwjgl-assimp-javadoc" level="project" />
-    <orderEntry type="library" name="joml-1.10.0" level="project" />
-    <orderEntry type="library" name="PNGDecoder" level="project" />
+    <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" exported="" name="lwjgl-assimp-javadoc" level="project" />
+    <orderEntry type="library" exported="" name="joml-1.10.0" level="project" />
+    <orderEntry type="library" exported="" name="PNGDecoder" level="project" />
   </component>
 </module>

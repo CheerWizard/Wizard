@@ -99,7 +99,4 @@ abstract class TextParser {
 
     fun getIndices(): IntArray = indices.toIntArray()
 
-    abstract fun createVertexBuffer(vertexName: String) : VertexBuffer
-    abstract fun createTextureBuffer(vertexName: String) : VertexBuffer
-
 }

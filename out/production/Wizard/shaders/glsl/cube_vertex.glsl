@@ -1,8 +1,9 @@
 #version 400 core
-
-in vec3 cubeVertices;
-in vec2 cubeTextures;
-in vec3 cubeNormals;
+// mesh buffer
+in vec3 position;
+in vec3 normal;
+// material buffer
+in vec2 coordinate;
 
 out vec2 passCubeTextures;
 out vec3 passCubeNormals;
@@ -22,20 +23,16 @@ uniform vec3 pointLightPosition;
 uniform mat4 camera;
 uniform mat4 projection3d;
 
-uniform mat4 cubeTransform;
-
 uniform float textureGridRowCount;
 uniform vec2 textureGridOffset;
 
 void main(void) {
 
-	vec4 cubeWorldPosition = cubeTransform * vec4(cubeVertices, 1.0);
-	gl_Position = projection3d * camera * cubeWorldPosition;
+	gl_Position = projection3d * camera * vec4(position, 1.0);
 
-	passCubeTextures = (cubeTextures / textureGridRowCount) + textureGridOffset;
+	passCubeTextures = coordinate;
 
-	vec3 cubeWorldNormal = (cubeTransform * vec4(cubeNormals, 0.0)).xyz;
-	passCubeNormals = normalize(cubeWorldNormal);
+	passCubeNormals = normalize(normal);
 
 	vec3 sunLightVector = sunLightPosition - cubeWorldPosition.xyz;
 	passSunLightDistance = length(sunLightVector);

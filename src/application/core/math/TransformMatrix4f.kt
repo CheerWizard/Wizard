@@ -4,7 +4,7 @@ import application.graphics.math.Rotator3f
 import application.graphics.math.Translator3f
 
 class TransformMatrix4f(
-    val name: String,
+    val name: String = "",
     val position: Translator3f = Translator3f(),
     val rotation: Rotator3f = Rotator3f(),
     var scalar: Vector3f = Vector3f(x = 1f, y = 1f, z = 1f)

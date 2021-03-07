@@ -8,14 +8,12 @@ import java.nio.ByteBuffer
 
 abstract class GLTexture(
     storagePath: String,
-    samplerUniformName: String,
     textureGrid: TextureGrid = TextureGrid(),
     detalization: Float = 0f,
     strengthUniformName: String,
     strength: Float = 1f
 ) : Texture(
     storagePath = storagePath,
-    slotUniformName = samplerUniformName,
     textureGrid = textureGrid,
     detalization = detalization,
     strengthUniformName = strengthUniformName,

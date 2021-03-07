@@ -5,7 +5,6 @@ import java.nio.ByteBuffer
 
 abstract class Texture(
     private val storagePath: String = STORAGE_PATH,
-    var slotUniformName: String,
     var strengthUniformName: String,
     val textureGrid: TextureGrid = TextureGrid(),
     val detalization: Float = 0f,
@@ -14,7 +13,7 @@ abstract class Texture(
 
     companion object {
         const val STORAGE_PATH = "res/textures"
-        const val MAX_SLOTS = 8
+        const val MAX_SLOTS = 16
     }
 
     abstract var id: Int

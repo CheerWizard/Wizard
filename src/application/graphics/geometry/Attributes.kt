@@ -1,17 +1,17 @@
 package application.graphics.geometry
 
-class Attribute4f : Attribute() {
+class Attribute4f(name: String, location: Int) : Attribute(name = name, location = location) {
     override fun size(): Int = 4
 }
 
-class Attribute3f : Attribute() {
+class Attribute3f(name: String, location: Int) : Attribute(name = name, location = location) {
     override fun size(): Int = 3
 }
 
-class Attribute2f : Attribute() {
+class Attribute2f(name: String, location: Int) : Attribute(name = name, location = location) {
     override fun size(): Int = 2
 }
 
-class Attribute1f : Attribute() {
+class Attribute1f(name: String, location: Int) : Attribute(name = name, location = location) {
     override fun size(): Int = 1
 }

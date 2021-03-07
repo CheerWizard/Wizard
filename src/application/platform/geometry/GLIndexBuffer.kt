@@ -1,9 +1,13 @@
-package application.platform.vertex
+package application.platform.geometry
 
 import application.graphics.geometry.IndexBuffer
 import org.lwjgl.opengl.GL15.*
 
-class GLIndexBuffer(capacity: Int = DEFAULT_CAPACITY) : IndexBuffer(capacity = capacity) {
+class GLIndexBuffer(
+        totalVertexCount: Int = MAX_VERTEX_COUNT,
+) : IndexBuffer(
+        totalVertexCount = totalVertexCount,
+) {
 
     override var id: Int = glGenBuffers()
 

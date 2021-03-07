@@ -6,9 +6,8 @@ import application.graphics.texture.Texture
 import application.graphics.uniform.UColor4f
 
 class MaterialComponent(
-    val textures: DestroyableList<Texture> = DestroyableList(),
-    val color: UColor4f? = null,
-    var parallax: Parallax? = null
+        val materialBuffers: DestroyableList<MaterialBuffer> = DestroyableList(),
+        var parallax: Parallax? = null
 ) : Component {
 
     companion object {
@@ -17,21 +16,53 @@ class MaterialComponent(
 
     override fun getId(): Short = ID
 
-    fun addTexture(texture: Texture): Int {
-        textures.add(texture.apply {
-            slot = textures.size
+    fun addMaterialBuffer(materialBuffer: MaterialBuffer): Int {
+        materialBuffers.add(materialBuffer.apply {
+            textureBuffer.apply {
+                slot = materialBuffers.size
+            }
         })
-        return textures.size - 1
+        return materialBuffers.size - 1
     }
 
-    fun removeTexture(textureId: Int) {
-        textures.removeAt(textureId)
+    fun removeMaterialBuffer(materialBufferId: Int) {
+        materialBuffers.removeAt(materialBufferId)
     }
 
-    fun getTexture(textureId: Int): Texture = textures[textureId]
+    fun getMaterialBuffer(materialBufferId: Int): MaterialBuffer = materialBuffers[materialBufferId]
 
     override fun onDestroy() {
-        textures.clear()
+        materialBuffers.clear()
+    }
+
+    fun prepareMaterialBuffers() {
+        for (materialBuffer in materialBuffers) {
+            materialBuffer.prepare()
+        }
+    }
+
+    fun bindMaterialBuffers() {
+        for (materialBuffer in materialBuffers) {
+            materialBuffer.bind()
+        }
+    }
+
+    fun unbindMaterialBuffers() {
+        for (materialBuffer in materialBuffers) {
+            materialBuffer.unbind()
+        }
+    }
+
+    fun enableAttributes() {
+        for (materialBuffer in materialBuffers) {
+            materialBuffer.enableAttributes()
+        }
+    }
+
+    fun disableAttributes() {
+        for (materialBuffer in materialBuffers) {
+            materialBuffer.disableAttributes()
+        }
     }
 
 }

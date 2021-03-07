@@ -6,7 +6,7 @@ import application.core.collection.DestroyableMap
 
 open class EntityGroup : Destroyable {
 
-    val entities = DestroyableList<Entity>()
+    val entities = ArrayList<Entity>()
 
     protected val components = DestroyableMap<Short, Component>()
 

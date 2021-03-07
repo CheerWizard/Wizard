@@ -5,7 +5,7 @@ import org.lwjgl.opengl.GL30.*
 
 class GLRender2dSystem(screenHeight: Float, screenWidth: Float) : Render2dSystem(screenWidth = screenWidth, screenHeight = screenHeight) {
 
-    override fun onDrawIndices(indexCount: Int) {
+    override fun draw(indexCount: Int) {
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0)
     }
 

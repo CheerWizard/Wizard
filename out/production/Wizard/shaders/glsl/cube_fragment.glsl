@@ -15,8 +15,7 @@ in vec3 passCameraVector;
 
 out vec4 cubeFragment;
 
-uniform sampler2D textureSampler;
-//uniform sampler2D textureSampler2;
+uniform sampler2D diffuseSampler;
 
 // sun light
 uniform vec3 sunLightColor;
@@ -41,10 +40,7 @@ void main(void) {
     vec3 totalDiffuse = sunLightDiffuse;
     vec3 totalSpecular = sunSpecular;
 
-    vec4 textureColor = texture(textureSampler, passCubeTextures);
-    if (textureColor.a < 0.5) {
-        discard;
-    }
+    vec4 textureColor = texture(diffuseSampler, passCubeTextures);
 
     cubeFragment = vec4(totalDiffuse, 1.0) * textureColor + vec4(totalSpecular, 1.0);
 
