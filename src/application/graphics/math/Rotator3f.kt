@@ -1,15 +1,15 @@
 package application.graphics.math
 
-import application.core.math.Vector3f
+import org.joml.Vector3f
 
 class Rotator3f(
     x: Float = 0f,
     y: Float = 0f,
     z: Float = 0f
 ) : Vector3f(
-    x = x,
-    y = y,
-    z = z
+    x,
+    y,
+    z
 ) {
 
     fun setXDegree(xDegree: Double) {

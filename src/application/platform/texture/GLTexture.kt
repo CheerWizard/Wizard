@@ -1,8 +1,8 @@
 package application.platform.texture
 
-import application.graphics.texture.Texture
-import application.graphics.texture.TextureData
-import application.graphics.texture.TextureGrid
+import application.graphics.core.texture.Texture
+import application.graphics.core.texture.TextureData
+import application.graphics.core.texture.TextureGrid
 import org.lwjgl.opengl.GL30.*
 import java.nio.ByteBuffer
 

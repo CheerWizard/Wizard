@@ -1,61 +1,34 @@
 package application.graphics.render
 
 import application.core.ecs.System
-import application.graphics.component.CameraComponent
-import application.graphics.mesh.MeshComponent
-import application.graphics.material.MaterialComponent
+import application.core.math.TransformComponent
+import application.graphics.core.material.MaterialComponent
+import application.graphics.core.mesh.MeshComponent
+import application.graphics.core.scene.CameraComponent
+import application.graphics.core.scene.ReflectionSceneComponent
+import application.graphics.core.scene.RefractionSceneComponent
 import application.graphics.math.ProjectionMatrix4f
-import application.graphics.scene.ReflectionSceneComponent
-import application.graphics.scene.RefractionSceneComponent
 import application.graphics.shader.ShaderComponent
-import application.graphics.uniform.UVector4f
+import application.graphics.shader.uniforms.UVector4f
 
 abstract class RenderSystem : System() {
 
     abstract val projection : ProjectionMatrix4f
 
     fun applyWindowAspectRatio(width: Float, height: Float) {
-        projection.screenWidth = width
-        projection.screenHeight = height
-        projection.apply()
+        projection.apply {
+            screenWidth = width
+            screenHeight = height
+            apply()
+        }
     }
 
     override fun onPrepareEntityGroup(entityGroupId: Int) {
         val entityGroup = entityGroups[entityGroupId]
         val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
-        val meshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
-        val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
-
-        shaderOwner.onCreate()
-
-        meshComponent.run {
-            bindVertexArray()
-            prepareMeshBuffers()
-            materialComponent?.prepareMaterialBuffers()
-            unbindVertexArray()
-        }
-
-        for (meshBuffer in meshComponent.meshBuffers) {
-            val positionAttribute = meshBuffer.positionBuffer.attribute
-            shaderOwner.setAttribute(attributeLocation = positionAttribute.location, attributeName = positionAttribute.name)
-            val normalsBuffer = meshBuffer.normalsBuffer
-            if (normalsBuffer != null) {
-                shaderOwner.setAttribute(attributeLocation = normalsBuffer.attribute.location, attributeName = normalsBuffer.attribute.name)
-            }
-        }
-
-        if (materialComponent != null) {
-            for (materialBuffer in materialComponent.materialBuffers) {
-                val coordinatesAttribute = materialBuffer.coordinatesBuffer.attribute
-                shaderOwner.setAttribute(attributeLocation = coordinatesAttribute.location, attributeName = coordinatesAttribute.name)
-                val colorsBuffer = materialBuffer.colorsBuffer
-                if (colorsBuffer != null) {
-                    shaderOwner.setAttribute(attributeLocation = colorsBuffer.attribute.location, attributeName = colorsBuffer.attribute.name)
-                }
-            }
-        }
 
         shaderOwner.run {
+            onCreate()
             onPrepare()
             putUniformName(projection.name)
         }
@@ -103,14 +76,30 @@ abstract class RenderSystem : System() {
     override fun getRequiredComponentId(): Short = ShaderComponent.ID
 
     override fun onUpdateEntityGroup(entityGroupId: Int) {
-        val entityGroup = entityGroups[entityGroupId]
-        val shaderComponent = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID)
-        val meshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
-        val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
+        super.onUpdateEntityGroup(entityGroupId)
 
-        shaderComponent.startShader()
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
+        val indexCount = shaderOwner.meshBuffer.getIndexCount()
+        val vertexCount = shaderOwner.meshBuffer.getVertexCount()
+
+        shaderOwner.onStart()
 
         updateComponents(entityGroupId)
+
+        if (indexCount == 0) {
+            drawVertices(vertexCount)
+        } else {
+            drawIndices(indexCount)
+        }
+
+        shaderOwner.onStop()
+    }
+
+    protected open fun updateComponents(entityGroupId: Int) {
+        val entityGroup = entityGroups[entityGroupId]
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
+        val meshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
 
         meshComponent.run {
             if (usesCullFace) {
@@ -118,57 +107,7 @@ abstract class RenderSystem : System() {
             } else {
                 disableCullFace()
             }
-//            setPolygonMode(meshGroupComponent.getPolygonMode())
         }
-
-        meshComponent.bindVertexArray()
-
-        if (materialComponent != null) {
-            updateAllBuffers(entityGroupId)
-        } else {
-            updateMeshBuffer(entityGroupId)
-        }
-
-        meshComponent.unbindVertexArray()
-
-        shaderComponent.stopShader()
-    }
-
-    private fun updateMeshBuffer(entityGroupId: Int) {
-        val meshBuffer = entityGroups[entityGroupId].getNonNullComponent<MeshComponent>(MeshComponent.ID).meshBuffers[0]
-
-        super.onUpdateEntityGroup(entityGroupId)
-
-        meshBuffer.enableAttributes()
-
-        meshBuffer.bind()
-
-        draw(meshBuffer.getIndexCount())
-
-        meshBuffer.disableAttributes()
-    }
-
-    private fun updateAllBuffers(entityGroupId: Int) {
-        val meshBuffer = entityGroups[entityGroupId].getNonNullComponent<MeshComponent>(MeshComponent.ID).meshBuffers[0]
-        val materialBuffer = entityGroups[entityGroupId].getNonNullComponent<MaterialComponent>(MaterialComponent.ID).materialBuffers[0]
-
-        super.onUpdateEntityGroup(entityGroupId)
-
-        meshBuffer.enableAttributes()
-        materialBuffer.enableAttributes()
-
-        meshBuffer.bind()
-        materialBuffer.bind()
-
-        draw(meshBuffer.getIndexCount())
-
-        materialBuffer.disableAttributes()
-        meshBuffer.disableAttributes()
-    }
-
-    protected open fun updateComponents(entityGroupId: Int) {
-        val entityGroup = entityGroups[entityGroupId]
-        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
 
         shaderOwner.setUniform(projection.name, projection)
 
@@ -176,68 +115,85 @@ abstract class RenderSystem : System() {
         if (cameraComponent != null) {
             shaderOwner.setUniform(cameraComponent.transformMatrix4f.name, cameraComponent.transformMatrix4f)
         }
-
-        val materialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
-        if (materialComponent != null) {
-            updateEntityGroupMaterial(entityGroupId)
-        }
-    }
-
-    private fun updateEntityGroupMaterial(entityGroupId: Int) {
-        val entityGroup = entityGroups[entityGroupId]
-        val materialComponent = entityGroup.getNonNullComponent<MaterialComponent>(MaterialComponent.ID)
-
-        for (materialBuffer in materialComponent.materialBuffers) {
-            materialBuffer.textureBuffer.run {
-                activateTexture()
-                bind()
-            }
-        }
     }
 
     override fun onUpdateEntity(entityGroupId: Int, entityId: Int) {
         val entityGroup = entityGroups[entityGroupId]
-        val entity = entityGroup.entities[entityId]
-        val meshGroupComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
+        val shaderOwner = entityGroup.getNonNullComponent<ShaderComponent>(ShaderComponent.ID).shaderOwner
+        val entityGroupMeshComponent = entityGroup.getNonNullComponent<MeshComponent>(MeshComponent.ID)
+        val entityGroupMaterialComponent = entityGroup.getComponent<MaterialComponent>(MaterialComponent.ID)
 
-        meshGroupComponent.getMeshBuffer(0).apply {
-            transformMesh(meshId = entityId, matrix4f = entity.transformation)
+        val entity = entityGroups[entityGroupId].entities[entityId]
+        val entityTransformation = entity.getNonNullComponent<TransformComponent>(TransformComponent.ID)
+        val entityMeshComponent = entity.getComponent<MeshComponent>(MeshComponent.ID)
+        val entityMaterialComponent = entity.getComponent<MaterialComponent>(MaterialComponent.ID)
+
+        if (entityMaterialComponent != null && entityMaterialComponent.isUpdated) {
+            shaderOwner.materialBuffer.addMaterial(entityMaterialComponent.material)
+        }
+
+        if (entityTransformation.isUpdated) {
+
+        }
+
+        if (entityMeshComponent != null && entityMeshComponent.isUpdated) {
+            shaderOwner.meshBuffer.addMesh(entityMeshComponent.mesh)
         }
     }
 
-    protected abstract fun draw(indexCount: Int)
-    protected abstract fun onDrawVertices(vertexCount: Int)
+    protected abstract fun drawIndices(indexCount: Int)
+    protected abstract fun drawVertices(vertexCount: Int)
 
-    private var polygonMode = 0
+    protected var polygonMode = 0
 
-    protected open fun setPolygonMode(polygonMode: Int) {
-        if (this.polygonMode == polygonMode) return
-        this.polygonMode = polygonMode
+    fun enablePolygonMode(polygonMode: Int) {
+        if (this.polygonMode != polygonMode) {
+            this.polygonMode = polygonMode
+            onPolygonMode()
+        }
     }
+
+    protected abstract fun onPolygonMode()
 
     private var isCullFaceEnabled = false
 
-    protected open fun enableCullFace() {
-        if (isCullFaceEnabled) return
-        isCullFaceEnabled = true
+    private fun enableCullFace() {
+        if (!isCullFaceEnabled) {
+            isCullFaceEnabled = true
+            onEnableCullFace()
+        }
     }
 
-    protected open fun disableCullFace() {
-        if (!isCullFaceEnabled) return
-        isCullFaceEnabled = false
+    protected abstract fun onEnableCullFace()
+
+    private fun disableCullFace() {
+        if (isCullFaceEnabled) {
+            isCullFaceEnabled = false
+            onDisableCullFace()
+        }
     }
+
+    protected abstract fun onDisableCullFace()
 
     private var isClippingEnabled = false
 
-    protected open fun enableClipping() {
-        if (isClippingEnabled) return
-        isClippingEnabled = true
+    private fun enableClipping() {
+        if (!isClippingEnabled) {
+            isClippingEnabled = true
+            onEnableClipping()
+        }
     }
 
-    protected open fun disableClipping() {
-        if (!isClippingEnabled) return
-        isClippingEnabled = false
+    protected abstract fun onEnableClipping()
+
+    private fun disableClipping() {
+        if (isClippingEnabled) {
+            isClippingEnabled = false
+            onDisableClipping()
+        }
     }
+
+    protected abstract fun onDisableClipping()
 
     override fun onUpdate() {
         val reflectionComponent = getSceneComponent<ReflectionSceneComponent>(ReflectionSceneComponent.ID)

@@ -1,7 +1,6 @@
 package application.graphics.render
 
-import application.graphics.component.LightComponent
-import application.graphics.component.SpecularComponent
+import application.graphics.core.scene.LightComponent
 import application.graphics.math.Projection3dMatrix4f
 import application.graphics.math.ProjectionMatrix4f
 import application.graphics.shader.ShaderComponent

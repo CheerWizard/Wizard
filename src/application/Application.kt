@@ -8,14 +8,14 @@ import org.lwjgl.glfw.GLFW
 import org.lwjgl.glfw.GLFWErrorCallback
 
 abstract class Application(title: String) :
-    Engine.Editor,
+    Engine.Listener,
     Window.Listener,
     Cursor.Listener
 {
 
-    protected val window: Window = Window(title = title)
     protected abstract val engine: Engine
 
+    protected val window: Window = Window(title = title)
     protected val inputController = InputController()
 
     fun run() {
@@ -24,9 +24,13 @@ abstract class Application(title: String) :
     }
 
     private fun loadLibraries() {
+        println("Loading libraries...")
+
         System.setProperty("java.awt.headless", "true")
         GLFWErrorCallback.createPrint().set()
         check(GLFW.glfwInit()) { "Unable to initialize GLFW!" }
+
+        println("Libraries loaded successfully!")
     }
 
     protected open fun bindInputController() {
@@ -52,6 +56,10 @@ abstract class Application(title: String) :
     override fun getHeight(): Float = window.getHeight()
     override fun getWidth(): Float = window.getWidth()
 
+    override fun onCreate() {
+        println("onCreate()")
+    }
+
     override fun onUpdate() {
         window.onUpdate()
         inputController.onUpdate()
@@ -69,6 +77,10 @@ abstract class Application(title: String) :
 
     override fun onCursorCoordinatesChanged(x: Float, y: Float) {
         println("Cursor [x : $x] [y : $y]")
+    }
+
+    override fun onWindowResized(width: Float, height: Float) {
+        println("onWindowResized()")
     }
 
 }

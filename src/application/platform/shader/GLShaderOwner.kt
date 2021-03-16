@@ -1,16 +1,56 @@
 package application.platform.shader
 
-import application.core.math.Matrix4f
-import application.core.math.Vector2f
-import application.core.math.Vector3f
-import application.core.math.Vector4f
+import application.graphics.core.buffers.MaterialBuffer
+import application.graphics.core.buffers.MeshBuffer
+import application.graphics.core.buffers.VertexArray
+import application.graphics.shader.Attribute
 import application.graphics.shader.Shader
 import application.graphics.shader.ShaderOwner
+import application.platform.core.buffers.GLMaterialBuffer
+import application.platform.core.buffers.GLMeshBuffer
+import application.platform.core.buffers.GLVertexArray
+import org.joml.Matrix4f
+import org.joml.Vector2f
+import org.joml.Vector3f
+import org.joml.Vector4f
+import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL20.*
+import java.nio.FloatBuffer
 
 class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(vertexShader = vertexShader, fragmentShader = fragmentShader) {
 
+    companion object {
+        private val MAT4F_BUFFER = BufferUtils.createFloatBuffer(16)
+
+        fun toBuffer(matrix4f: Matrix4f) : FloatBuffer {
+            return MAT4F_BUFFER.apply {
+                clear()
+                put(matrix4f.m00())
+                put(matrix4f.m01())
+                put(matrix4f.m02())
+                put(matrix4f.m03())
+                put(matrix4f.m10())
+                put(matrix4f.m11())
+                put(matrix4f.m12())
+                put(matrix4f.m13())
+                put(matrix4f.m20())
+                put(matrix4f.m21())
+                put(matrix4f.m22())
+                put(matrix4f.m23())
+                put(matrix4f.m30())
+                put(matrix4f.m31())
+                put(matrix4f.m32())
+                put(matrix4f.m33())
+                flip()
+            }
+        }
+    }
+
     override var id: Int = 0
+
+    override val vertexArray: VertexArray = GLVertexArray()
+    override val meshBuffer: MeshBuffer = GLMeshBuffer()
+    override val materialBuffer: MaterialBuffer = GLMaterialBuffer()
 
     override fun getFragmentShader(fileName: String): Shader = GLFragmentShader(fileName = fileName)
     override fun getVertexShader(fileName: String): Shader = GLVertexShader(fileName = fileName)
@@ -32,8 +72,14 @@ class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(
         glAttachShader(id, fragmentShader.id)
     }
 
-    override fun onStart() = glUseProgram(id)
-    override fun onStop() = glUseProgram(0)
+    override fun onStart() {
+        glUseProgram(id)
+        super.onStart()
+    }
+    override fun onStop() {
+        super.onStop()
+        glUseProgram(0)
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -50,13 +96,10 @@ class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(
         uniformLocations[uniformName] = glGetUniformLocation(id, uniformName)
     }
 
-    override fun setAttribute(attributeName: String) {
-        val attributeLocation = glGetAttribLocation(id, attributeName)
-        setAttribute(attributeName = attributeName, attributeLocation = attributeLocation)
-    }
-
-    override fun setAttribute(attributeName: String, attributeLocation: Int) {
-        glBindAttribLocation(id, attributeLocation, attributeName)
+    override fun findAttributeLocation(attribute: Attribute) {
+        val attributeLocation = glGetAttribLocation(id, attribute.name)
+        glBindAttribLocation(id, attributeLocation, attribute.name)
+        attribute.location = attributeLocation
     }
 
     override fun setUniform(uniformName: String, uniformValue: Float) {
@@ -79,7 +122,7 @@ class GLShaderOwner(vertexShader: Shader, fragmentShader: Shader) : ShaderOwner(
 
     override fun setUniform(uniformName: String, uniformValue: Matrix4f) {
         uniformLocations[uniformName]?.let { l->
-            glUniformMatrix4fv(l, false, uniformValue.toBuffer())
+            glUniformMatrix4fv(l, false, toBuffer(uniformValue))
         }
     }
 

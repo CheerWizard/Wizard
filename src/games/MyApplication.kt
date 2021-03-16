@@ -4,145 +4,186 @@ import application.core.ecs.Engine
 import application.core.ecs.Entity
 import application.core.ecs.EntityGroup
 import application.core.math.TransformMatrix4f
-import application.core.math.Vector3f
-import application.graphics.component.LightComponent
-import application.graphics.mesh.MeshComponent
-import application.graphics.component.SpecularComponent
-import application.graphics.material.MaterialComponent
-import application.graphics.material.Parallax
-import application.graphics.math.Translator3f
+import application.graphics.core.scene.LightComponent
+import application.graphics.shader.Attribute2f
+import application.graphics.shader.Attribute3f
+import application.graphics.shader.Attribute4f
+import application.graphics.core.buffers.MaterialBuffer
+import application.graphics.core.material.MaterialComponent
+import application.graphics.math.Color4f
+import application.graphics.math.Rotator3f
+import application.graphics.core.buffers.MeshBuffer
+import application.graphics.core.mesh.MeshComponent
 import application.graphics.render.Render3dSystem
 import application.graphics.shader.ShaderComponent
-import application.graphics.texture.TextureGrid
-import application.platform.GLApplication
+import application.graphics.shader.uniforms.UColor3f
+import application.graphics.shader.uniforms.UFloat
+import application.graphics.shader.uniforms.UVector3f
 import application.platform.GLEngine
+import application.platform.GraphicsApplication
+import application.platform.core.buffers.GLIndexBuffer
+import application.platform.core.buffers.GLVertexArray
+import application.platform.core.buffers.GLVertexBuffer
 import application.platform.shader.GLFragmentShader
 import application.platform.shader.GLShaderOwner
 import application.platform.shader.GLVertexShader
 import application.platform.texture.GLTexture2d
-import application.platform.geometry.GLIndexBuffer
-import application.platform.geometry.GLVertexArray
-import application.platform.geometry.GLVertexBuffer
+import org.joml.Random
+import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
 
-class MyApplication : GLApplication(title = "MyApplication") {
+class MyApplication : GraphicsApplication(title = "MyApplication") {
 
     override val engine: Engine = GLEngine(this)
 
     private var sunLightComponent = LightComponent(
-        positionUniformName = "lightPosition",
-        colorUniformName = "lightColor",
-        radiusUniformName = "lightRadius",
-        radius = Vector3f(
-            x = 0.75f
+        position = UVector3f(
+            name = "lightPosition",
+            x = 0f,
+            y = 200f,
+            z = 0f
         ),
-        position = Translator3f(y = 200f)
+        color = UColor3f(
+            name = "lightColor",
+            red = 1f,
+            green = 1f,
+            blue = 1f
+        ),
+        radius = UVector3f(
+            name = "lightRadius",
+            x = 0.75f,
+            y = 0f,
+            z = 0f
+        )
     )
 
     override fun onCreate() {
         super.onCreate()
 
-//        val cubeShaderComponent = ShaderComponent(
-//            shaderOwner = GLShaderOwner(
-//                vertexShader = GLVertexShader("normal_mapping_vertex.glsl").readFile(),
-//                fragmentShader = GLFragmentShader("normal_mapping_fragment.glsl").readFile()
-//            )
-//        )
-//
-//        val textureGrid = TextureGrid(
-//            gridOffsetName = "textureGridOffset",
-//            rowCountName = "textureGridRowCount",
-//        )
-//
-//        val waterDiffuse = GLTexture2d(
-//            samplerUniformName = "diffuseSampler1",
-//            textureGrid = textureGrid,
-//            detalization = 5f,
-//            strengthUniformName = "diffuseStrength1"
-//        ).create("water_diffuse.jpg")
-//
-//        val waterNormal = GLTexture2d(
-//            samplerUniformName = "normalSampler",
-//            textureGrid = textureGrid,
-//            strengthUniformName = "normalStrength"
-//        ).create("water_normal.jpg")
-//
-//        val rockSpecular = GLTexture2d(
-//            samplerUniformName = "specularSampler",
-//            textureGrid = textureGrid,
-//            strengthUniformName = "specularStrength"
-//        ).create("rock_specular.png")
-//
-//        val waterParallax = GLTexture2d(
-//            samplerUniformName = "parallaxSampler",
-//            textureGrid = textureGrid,
-//            strengthUniformName = "parallaxStrength",
-//            strength = 0.35f
-//        ).create("water_parallax.png")
-//
-//        val grass = GLTexture2d(
-//            samplerUniformName = "diffuseSampler2",
-//            textureGrid = textureGrid,
-//            detalization = 5f,
-//            strengthUniformName = "diffuseStrength2",
-//            strength = 0.25f
-//        ).create("grass2.jpg")
-//
-//        val parallax = Parallax(
-//            offsetUniformName = "parallaxOffset",
-//            offset = 0f,
-//        )
-//
-//        val cubeTextureComponent = MaterialComponent().apply {
-//            addTexture(waterDiffuse)
-//            addTexture(waterNormal)
-//            addTexture(waterParallax)
-//            addTexture(rockSpecular)
-//            this.parallax = parallax
-//        }
-//
-//        val specularComponent = SpecularComponent(
-//            reflectivityUniformName = "reflectivity",
-//            shiningUniformName = "shining",
-//            shining = 10f,
-//            brightnessUniformName = "brightness",
-//            brightness = 0.75f,
-//            reflectivity = 4f
-//        )
-//
-//        terrainParser.apply {
-//            gridCount = 10
-//            parseHeightMap("rock_height.png")
-//        }
-//
-//        val vertexBuffer = terrainParser.getVertexBuffer("cubeVertices")
-//        val textureBuffer = terrainParser.getTextureBuffer("cubeTextures")
-//        val normalBuffer = terrainParser.getNormalBuffer("cubeNormals")
-//        val indices = terrainParser.getIndices()
-//        val tangentBuffer = terrainParser.getVertexBuffer("cubeTangents")
-//
-//        val cubeMeshComponent = MeshComponent(
-//            vertexArray = GLVertexArray(),
-//            vertexBuffer = GLVertexBuffer(),
-//            indexBuffer = GLIndexBuffer()
-//        )
-//
-//        val plate = EntityGroup().apply {
-//            putComponent(cameraComponent)
-//            putComponent(cubeShaderComponent)
-//            putComponent(cubeMeshComponent)
-//            putComponent(cubeTextureComponent)
-//            putComponent(sunLightComponent)
-//            putComponent(specularComponent)
-//            addEntity(Entity(
-//                transformation = TransformMatrix4f(
-//                    name = "cubeTransform",
-//                    scalar = Vector3f(x = 10f, y = 1f, z = 10f)
-//                )
-//            ))
-//        }
-//
-//        plateId = engine.addEntityGroup(systemId = Render3dSystem.ID, entityGroup = plate)
+        objParser.parse("deagle.obj")
+
+        val positions = objParser.getPositions()
+        val indices = objParser.getIndices()
+        val coordinates = objParser.getTextureCoordinates()
+        val normals = objParser.getNormals()
+
+        val meshCount = 1000
+
+        val meshBuffer = MeshBuffer(
+            indexBuffer = GLIndexBuffer(
+                totalIndexCount = indices.size * meshCount
+            ),
+            positionBuffer = GLVertexBuffer(
+                attribute = Attribute3f(
+                    name = "position",
+                    location = 0
+                ),
+                totalVertexCount = positions.size * meshCount
+            ),
+            normalsBuffer = GLVertexBuffer(
+                attribute = Attribute3f(
+                    name = "normal",
+                    location = 1
+                ),
+                totalVertexCount = normals.size * meshCount
+            )
+        )
+
+        val meshComponent = MeshComponent(
+            vertexArray = GLVertexArray()
+        ).apply {
+            usesCullFace = true
+            addMeshBuffer(meshBuffer)
+        }
+
+        val materialBuffer = MaterialBuffer(
+            textureBuffer =  GLTexture2d(
+                strengthUniformName = "diffuseSampler",
+                detalization = 0f
+            ).create("grey.png"),
+            coordinatesBuffer = GLVertexBuffer(
+                attribute = Attribute2f(
+                    name = "coordinate",
+                    location = 2
+                ),
+                totalVertexCount = coordinates.size * meshCount
+            ),
+            colorsBuffer = GLVertexBuffer(
+                attribute = Attribute4f(
+                    name = "color",
+                    location = 3
+                ),
+                totalVertexCount = positions.size * meshCount
+            )
+        )
+
+        val materialComponent = MaterialComponent().apply {
+            addMaterialBuffer(materialBuffer)
+        }
+
+        val shaderComponent = ShaderComponent(
+            shaderOwner = GLShaderOwner(
+                vertexShader = GLVertexShader("cube_vertex").readFile(),
+                fragmentShader = GLFragmentShader("cube_fragment").readFile()
+            )
+        )
+
+        val specularComponent = SpecularComponent(
+            shining = UFloat(
+                name = "shining",
+                value = 2f
+            ),
+            reflectivity = UFloat(
+                name = "reflectivity",
+                value = 1f
+            ),
+            brightness = UFloat(
+                name = "brightness",
+                value = 0.5f
+            )
+        )
+
+        val skyGroup = EntityGroup().apply {
+            putComponent(meshComponent)
+            putComponent(materialComponent)
+            putComponent(shaderComponent)
+            putComponent(cameraComponent)
+            putComponent(sunLightComponent)
+            putComponent(specularComponent)
+        }
+
+        val random = Random(1000000)
+
+        for (i in 0 until meshCount) {
+            val r1 = random.nextFloat()
+            val r2 = random.nextFloat()
+            val r3 = random.nextFloat()
+
+            val x = r1 * 100 - 50
+            val y = r2 * 100 - 50
+            val z = r3 * -300
+
+            meshBuffer.addMesh(positions = positions, indices = indices, normals = normals)
+            materialBuffer.fillColor(color = Color4f(red = random.nextFloat(), green = random.nextFloat(), blue = random.nextFloat()), vertexStart = positions.size * i, vertexEnd = positions.size * (i + 1) / 2)
+            materialBuffer.fillColor(color = Color4f(red = random.nextFloat(), green = random.nextFloat(), blue = random.nextFloat()), vertexStart = positions.size * i / 2, vertexEnd = positions.size * (i + 1))
+            materialBuffer.addCoordinates(coordinates)
+
+            skyGroup.addEntity(
+                Entity(
+                    transformation = TransformMatrix4f(
+                        position = Vector3f(x,y,z),
+                        rotation = Rotator3f(x = x * 90f, y = x * 90f, z = z * 90f),
+                    )
+                )
+            )
+        }
+
+        meshBuffer.readMode()
+        materialBuffer.readMode()
+
+        engine.fps = 144
+
+        engine.addEntityGroup(systemId = Render3dSystem.ID, skyGroup)
     }
 
     private var plateId = 0
@@ -171,9 +212,9 @@ class MyApplication : GLApplication(title = "MyApplication") {
 
     private fun moveLight(x: Float = 0f, y: Float = 0f, z: Float = 0f) {
         sunLightComponent.apply {
-            position.addX(x)
-            position.addY(y)
-            position.addZ(z)
+            position.x += x
+            position.y += y
+            position.z += z
         }
     }
 

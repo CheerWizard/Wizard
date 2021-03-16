@@ -1,18 +1,16 @@
 package application.graphics.math
 
-import application.core.math.Vector3f
+import org.joml.Vector3f
 
-class Color3f(
+open class Color3f(
     red: Float = 0f,
     green: Float = 0f,
     blue: Float = 0f
-) : Vector3f() {
-    init {
-        x = red
-        y = green
-        z = blue
-    }
-
+) : Vector3f(
+    red,
+    green,
+    blue
+) {
     companion object {
         fun white(): Color3f = Color3f(
             red = 1f,

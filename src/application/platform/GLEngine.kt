@@ -1,22 +1,40 @@
 package application.platform
 
 import application.core.ecs.Engine
+import application.graphics.tools.ShaderFactory
+import application.core.tools.VideoCard
 import application.graphics.math.Color4f
+import application.platform.core.tools.GLShaderFactory
+import application.platform.core.tools.GLVideoCard
+import application.platform.renderer.GLRender2dSystem
 import application.platform.renderer.GLRender3dSystem
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL30.*
 
-class GLEngine(editor: Editor) : Engine(editor = editor) {
+class GLEngine(listener: Listener) : Engine(listener = listener) {
+
+    override val shaderFactory: ShaderFactory = GLShaderFactory()
+    override val videoCard: VideoCard = GLVideoCard()
 
     var clearColor: Color4f = Color4f.white()
 
     override fun onCreate() {
+        val screenWidth = listener.getWidth()
+        val screenHeight = listener.getHeight()
+
         putSystem(
             GLRender3dSystem(
-                screenWidth = editor.getWidth(),
-                screenHeight = editor.getHeight()
+                screenWidth = screenWidth,
+                screenHeight = screenHeight
             )
         )
+        putSystem(
+            GLRender2dSystem(
+                screenWidth = screenWidth,
+                screenHeight = screenHeight
+            )
+        )
+
         super.onCreate()
     }
 

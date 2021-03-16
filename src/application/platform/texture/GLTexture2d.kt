@@ -1,6 +1,6 @@
 package application.platform.texture
 
-import application.graphics.texture.TextureGrid
+import application.graphics.core.texture.TextureGrid
 import org.lwjgl.opengl.GL11
 
 class GLTexture2d(

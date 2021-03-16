@@ -1,10 +1,13 @@
 package application.graphics.shader
 
 import application.core.Destroyable
-import application.core.math.Matrix4f
-import application.core.math.Vector2f
-import application.core.math.Vector3f
-import application.core.math.Vector4f
+import application.graphics.core.buffers.MaterialBuffer
+import application.graphics.core.buffers.MeshBuffer
+import application.graphics.core.buffers.VertexArray
+import org.joml.Matrix4f
+import org.joml.Vector2f
+import org.joml.Vector3f
+import org.joml.Vector4f
 
 abstract class ShaderOwner(
     protected val vertexShader: Shader,
@@ -19,6 +22,10 @@ abstract class ShaderOwner(
     private var isPrepared = false
     private var isDestroyed = false
 
+    abstract val vertexArray: VertexArray
+    abstract val meshBuffer: MeshBuffer
+    abstract val materialBuffer: MaterialBuffer
+
     open fun onCreate() {
         if (isCreated) return
         isCreated = true
@@ -28,12 +35,44 @@ abstract class ShaderOwner(
     }
 
     open fun onPrepare() {
+        findBuffersLocation()
+        prepareBuffers()
+
         if (isPrepared) return
         isPrepared = true
     }
 
-    abstract fun onStart()
-    abstract fun onStop()
+    private fun findBuffersLocation() {
+        val meshAttributes = meshBuffer.getAttributes()
+        val materialAttributes = materialBuffer.getAttributes()
+
+        for (attribute in meshAttributes) {
+            findAttributeLocation(attribute)
+        }
+
+        for (attribute in materialAttributes) {
+            findAttributeLocation(attribute)
+        }
+    }
+
+    private fun prepareBuffers() {
+        vertexArray.bind()
+        meshBuffer.prepare()
+        materialBuffer.prepare()
+        vertexArray.unbind()
+    }
+
+    open fun onStart() {
+        vertexArray.bind()
+        meshBuffer.enableAttributes()
+        materialBuffer.enableAttributes()
+    }
+
+    open fun onStop() {
+        materialBuffer.disableAttributes()
+        meshBuffer.disableAttributes()
+        vertexArray.unbind()
+    }
 
     override fun onDestroy() {
         if (isDestroyed) return
@@ -42,10 +81,26 @@ abstract class ShaderOwner(
         fragmentShader.onDestroy()
         vertexShader.onDestroy()
         uniformLocations.clear()
+
+        meshBuffer.onDestroy()
+        materialBuffer.onDestroy()
     }
 
-    abstract fun setAttribute(attributeName: String)
-    abstract fun setAttribute(attributeName: String, attributeLocation: Int)
+    fun createPositionBuffer(name: String) {
+        meshBuffer.createPositionBuffer(name)
+    }
+
+    fun createNormalBuffer(name: String) {
+        meshBuffer.createNormalBuffer(name)
+    }
+
+    fun createCoordinatesBuffer(name: String) {
+        materialBuffer.createCoordinatesBuffer(name)
+    }
+
+    fun createColorsBuffer(name: String) {
+        materialBuffer.createColorsBuffer(name)
+    }
 
     abstract fun putUniformName(uniformName: String)
     abstract fun setUniform(uniformName: String, uniformValue: Matrix4f)
@@ -60,5 +115,6 @@ abstract class ShaderOwner(
 
     protected abstract fun getFragmentShader(fileName: String): Shader
     protected abstract fun getVertexShader(fileName: String): Shader
+    protected abstract fun findAttributeLocation(attribute: Attribute)
 
 }

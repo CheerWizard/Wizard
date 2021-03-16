@@ -1,6 +1,6 @@
 package application.graphics.math
 
-import application.core.math.Matrix4f
+import org.joml.Matrix4f
 
 open class ProjectionMatrix4f(
     val name: String,

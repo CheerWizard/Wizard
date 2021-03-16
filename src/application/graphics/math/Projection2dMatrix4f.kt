@@ -14,7 +14,12 @@ class Projection2dMatrix4f(
 
     override fun apply() {
         identity()
-        ortho2D(left, screenWidth, screenHeight, top)
+        ortho2D(
+            left,
+            screenWidth,
+            screenHeight,
+            top
+        )
     }
 
 }

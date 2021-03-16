@@ -1,6 +1,6 @@
 package application.core.collection
 
-import application.core.math.Vector3f
+import org.joml.Vector3f
 
 class Vector3fList : ArrayList<Vector3f>() {
 

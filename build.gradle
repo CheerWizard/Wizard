@@ -1,0 +1,80 @@
+apply plugin: 'idea'
+apply plugin: 'kotlin'
+apply plugin: 'java'
+
+buildscript {
+
+    ext.kotlin_version = '1.4.31'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+
+}
+
+allprojects {
+    repositories {
+        jcenter()
+        mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+}
+
+project.ext.lwjglVersion = "3.2.3"
+project.ext.jomlVersion = "1.10.1"
+project.ext.lwjglNatives = "natives-windows"
+
+dependencies {
+    // Kotlin core
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    // LWJGL core
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    implementation "org.lwjgl:lwjgl"
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    // Open GL Window Library
+    implementation "org.lwjgl:lwjgl-glfw"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+    // Bit operations library
+    implementation "org.lwjgl:lwjgl-libdivide"
+    runtimeOnly "org.lwjgl:lwjgl-libdivide::$lwjglNatives"
+    // NanoVG
+    implementation "org.lwjgl:lwjgl-nanovg"
+    runtimeOnly "org.lwjgl:lwjgl-nanovg::$lwjglNatives"
+    // Nuklear
+    implementation "org.lwjgl:lwjgl-nuklear"
+    runtimeOnly "org.lwjgl:lwjgl-nuklear::$lwjglNatives"
+    // Audio Library
+    implementation "org.lwjgl:lwjgl-openal"
+    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
+    // Graphics Library
+    implementation "org.lwjgl:lwjgl-opengl"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    // Graphics Library for embedded systems such as Android
+    implementation "org.lwjgl:lwjgl-opengles"
+    runtimeOnly "org.lwjgl:lwjgl-opengles::$lwjglNatives"
+    // Custom allocators
+    implementation "org.lwjgl:lwjgl-jemalloc"
+    runtimeOnly "org.lwjgl:lwjgl-jemalloc::$lwjglNatives"
+    implementation "org.lwjgl:lwjgl-rpmalloc"
+    runtimeOnly "org.lwjgl:lwjgl-rpmalloc::$lwjglNatives"
+    // Fast Hash algorithms
+    implementation "org.lwjgl:lwjgl-xxhash"
+    runtimeOnly "org.lwjgl:lwjgl-xxhash::$lwjglNatives"
+    // Java Math Library
+    implementation "org.joml:joml:${jomlVersion}"
+    // STB images
+    implementation "org.lwjgl:lwjgl-stb:${lwjglVersion}"
+}

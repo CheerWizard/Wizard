@@ -1,20 +1,18 @@
 package application.graphics.math
 
-import application.core.math.Vector4f
+import org.joml.Vector4f
 
 open class Color4f(
     red: Float = 0f,
     green: Float = 0f,
     blue: Float = 0f,
-    alpha: Float = 0f
-) : Vector4f() {
-
-    init {
-        x = red
-        y = green
-        z = blue
-        w = alpha
-    }
+    alpha: Float = 1f
+) : Vector4f(
+    red,
+    green,
+    blue,
+    alpha
+) {
 
     companion object {
         fun white(): Color4f = Color4f(

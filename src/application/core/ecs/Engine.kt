@@ -2,10 +2,12 @@ package application.core.ecs
 
 import application.core.Destroyable
 import application.core.collection.DestroyableMap
+import application.graphics.tools.ShaderFactory
+import application.core.tools.VideoCard
 
-abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
+abstract class Engine(protected var listener: Listener) : Thread(), Destroyable {
 
-    interface Editor {
+    interface Listener {
         fun isOpen(): Boolean
         fun createWindow()
         fun onCreate()
@@ -15,7 +17,12 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
         fun getHeight(): Float
     }
 
+    abstract val shaderFactory: ShaderFactory
+    abstract val videoCard: VideoCard
+
     protected val systems: DestroyableMap<Byte, System> = DestroyableMap()
+
+    var fps: Long = 60
 
     fun addEntityGroup(systemId: Byte, entityGroup: EntityGroup): Int {
         val system = systems[systemId]
@@ -27,16 +34,16 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
 
     override fun run() {
         onCreate()
-        while (editor.isOpen()) {
+        while (listener.isOpen()) {
             onUpdate()
         }
         onDestroy()
     }
 
     protected open fun onCreate() {
-        editor.createWindow()
+        listener.createWindow()
         createNativeCapabilities()
-        editor.onCreate()
+        listener.onCreate()
         for (system in systems.values) {
             system.run {
                 onPrepare()
@@ -47,10 +54,19 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
     protected abstract fun createNativeCapabilities()
 
     protected open fun onUpdate() {
+        val startFrameTime = java.lang.System.currentTimeMillis()
+
         for (system in systems.values) {
             system.onUpdate()
         }
-        editor.onUpdate()
+        listener.onUpdate()
+
+        val deltaFrameTime = java.lang.System.currentTimeMillis() - startFrameTime
+        val maxFrameTime = 1000 / fps
+
+        if (deltaFrameTime <= maxFrameTime) {
+            sleep(maxFrameTime)
+        }
     }
 
     fun putSystem(system: System) {
@@ -93,7 +109,7 @@ abstract class Engine(protected var editor: Editor) : Thread(), Destroyable {
 
     override fun onDestroy() {
         systems.clear()
-        editor.onDestroy()
+        listener.onDestroy()
     }
 
 }

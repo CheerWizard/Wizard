@@ -1,10 +1,8 @@
 package application.platform.hud
 
-import application.graphics.hud.TextParser
-import application.graphics.texture.Texture
-import application.graphics.geometry.VertexBuffer
+import application.graphics.tools.TextParser
+import application.graphics.core.texture.Texture
 import application.platform.texture.GLTexture2d
-import application.platform.geometry.GLVertexBuffer
 
 class GLTextParser : TextParser() {
 

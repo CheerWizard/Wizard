@@ -9,14 +9,17 @@ import kotlin.system.exitProcess
 abstract class Shader(private val fileName: String) : Destroyable {
 
     abstract var id: Int
+
+    protected abstract val fileExtension: String
     protected abstract val storagePath: String
+
     protected var source: CharSequence = ""
 
     fun readFile() : Shader {
         val source = StringBuilder()
 
         try {
-            val reader = BufferedReader(FileReader("$storagePath/$fileName"))
+            val reader = BufferedReader(FileReader("$storagePath/$fileName.$fileExtension"))
 
             var line: String?
             while ((reader.readLine()).also { line = it } != null) {

@@ -5,28 +5,33 @@ import org.lwjgl.opengl.GL30.*
 
 class GLRender2dSystem(screenHeight: Float, screenWidth: Float) : Render2dSystem(screenWidth = screenWidth, screenHeight = screenHeight) {
 
-    override fun draw(indexCount: Int) {
+    override fun drawIndices(indexCount: Int) {
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0)
     }
 
-    override fun onDrawVertices(vertexCount: Int) {
+    override fun drawVertices(vertexCount: Int) {
         glDrawArrays(GL_TRIANGLES, 0, vertexCount)
     }
 
-    override fun setPolygonMode(polygonMode: Int) {
-        super.setPolygonMode(polygonMode)
+    override fun onPolygonMode() {
         glPolygonMode(GL_FRONT_AND_BACK, polygonMode)
     }
 
-    override fun enableCullFace() {
-        super.enableCullFace()
+    override fun onEnableCullFace() {
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
     }
 
-    override fun disableCullFace() {
-        super.disableCullFace()
+    override fun onDisableCullFace() {
         glDisable(GL_CULL_FACE)
+    }
+
+    override fun onEnableClipping() {
+        glEnable(GL_CLIP_DISTANCE0)
+    }
+
+    override fun onDisableClipping() {
+        glDisable(GL_CLIP_DISTANCE0)
     }
 
 }

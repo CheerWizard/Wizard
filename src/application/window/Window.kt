@@ -57,7 +57,7 @@ class Window(
         glfwSetWindowCloseCallback(id) {
             listener.onWindowClosed()
         }
-        glfwSetWindowSizeCallback(id) { window, width, height ->
+        glfwSetWindowSizeCallback(id) { _, width, height ->
             listener.onWindowResized(width = width.toFloat(), height = height.toFloat())
         }
     }

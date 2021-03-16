@@ -7,6 +7,8 @@ abstract class GLShader(fileName: String) : Shader(fileName) {
 
     override val storagePath: String = "res/shaders/glsl"
 
+    override val fileExtension: String = "glsl"
+
     override fun onCreate() {
         glShaderSource(id, source)
         glCompileShader(id)
