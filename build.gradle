@@ -1,3 +1,5 @@
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+
 apply plugin: 'idea'
 apply plugin: 'kotlin'
 apply plugin: 'java'
@@ -33,9 +35,18 @@ sourceSets {
     }
 }
 
+OperatingSystem os = DefaultNativePlatform.currentOperatingSystem;
+
+if (os.isLinux()) {
+    ext.lwjglNatives = "natives-linux"
+} else if (os.isMacOsX()) {
+    ext.lwjglNatives = "natives-macos"
+} else if (os.isWindows()) {
+    ext.lwjglNatives = "natives-windows"
+}
+
 project.ext.lwjglVersion = "3.2.3"
 project.ext.jomlVersion = "1.10.1"
-project.ext.lwjglNatives = "natives-windows"
 
 dependencies {
     // Kotlin core
@@ -77,4 +88,15 @@ dependencies {
     implementation "org.joml:joml:${jomlVersion}"
     // STB images
     implementation "org.lwjgl:lwjgl-stb:${lwjglVersion}"
+
+    ["gl", "glfw", "core"].each {
+        implementation "com.github.kotlin-graphics.imgui:$it:-SNAPSHOT"
+    }
+
+    configurations.compile.resolvedConfiguration.getResolvedArtifacts().forEach {
+        if (it.moduleVersion.id.group == "org.lwjgl") {
+            runtime "org.lwjgl:${it.moduleVersion.id.name}:${it.moduleVersion.id.version}:${lwjglNatives}"
+        }
+    }
+
 }
