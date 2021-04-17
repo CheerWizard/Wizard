@@ -13,20 +13,23 @@ import engine.graphics.render.Render2dSystem
 import engine.graphics.render.Render3dSystem
 import engine.graphics.shader.attributes.*
 import engine.platform.GLEngine
-import imgui.ImGuiApplication
-import org.joml.Vector3f
+import engine.platform.SceneApplication
 
-class SandboxApplication : ImGuiApplication() {
+class SandboxApplication : SceneApplication() {
 
-    override val engine: Engine = GLEngine(title = "Sandbox", client = this)
-
-//    override var cursorX: Float = engine.window.getCursorCenterX()
-//    override var cursorY: Float = engine.window.getCursorCenterY()
+    override val engine: Engine = GLEngine(client = this)
 
     override fun onCreate() {
         super.onCreate()
+        sceneWindow.setResizable()
+        sceneWindow.setSize(width = 800, height = 600)
+        createSystems()
         createModel()
 //        createWidget()
+    }
+
+    private fun createSystems() {
+        engine.createRender3d(sceneWindow.title)
     }
 
     private fun createModel() {
@@ -53,26 +56,14 @@ class SandboxApplication : ImGuiApplication() {
         val transformAttribute1 = Attribute16f(
             name = "transform",
             type = Attribute.INSTANCE_TYPE,
-            data = TransformMatrix4f(position = Vector3f(-15f, 0f, 0f))
-        )
-
-        val transformAttribute2 = Attribute16f(
-            name = "transform",
-            type = Attribute.INSTANCE_TYPE,
             data = TransformMatrix4f()
-        )
-
-        val transformAttribute3 = Attribute16f(
-            name = "transform",
-            type = Attribute.INSTANCE_TYPE,
-            data = TransformMatrix4f(position = Vector3f(15f, 0f, 0f))
         )
 
         shader.shaderOwner.run {
             addVertexAttribute(positionAttribute)
             addVertexAttribute(coordinateAttribute)
             addVertexAttribute(slotAttribute)
-//            addInstanceAttribute(transformAttribute1)
+            addInstanceAttribute(transformAttribute1)
         }
 
         val positions = engine.objParser.getPositions()
@@ -107,20 +98,21 @@ class SandboxApplication : ImGuiApplication() {
                 vertexStart = getVertexCount() / 2
             )
 
-//            addMeshAttribute(transformAttribute1)
-//
-//            allocateMeshData(3)
-//            fillMeshData(meshStart = 0, attributeOffset = transformAttribute1.offset, transformAttribute1.data)
-//            fillMeshData(meshStart = 1, attributeOffset = transformAttribute2.offset, transformAttribute2.data)
-//            fillMeshData(meshStart = 2, attributeOffset = transformAttribute3.offset, transformAttribute3.data)
+            addMeshAttribute(transformAttribute1)
+
+            allocateMeshData(1)
+            fillMeshData(meshStart = 0, attributeOffset = transformAttribute1.offset, transformAttribute1.data)
         }
 
-        val deagleMeshComponent = MeshComponent(deagleMesh)
+        val deagleMeshComponent = MeshComponent(deagleMesh).apply {
+            cullFaceEnabled = true
+        }
 
         val deagle1 = Entity()
 
         val deagleEntityGroup = EntityGroup().apply {
             putComponent(shader)
+            putComponent(cameraComponent)
             putComponent(deagleMeshComponent)
             addEntity(deagle1)
         }
@@ -157,6 +149,9 @@ class SandboxApplication : ImGuiApplication() {
         }
 
         engine.addEntityGroup(systemTag = Render2dSystem::class.java.simpleName, entityGroup = widgetGroup)
+    }
+
+    override fun onUpdate() {
     }
 
 }

@@ -1,8 +1,8 @@
-package engine.window
+package engine.io
 
 import engine.core.Destroyable
 
-class IOController : Destroyable {
+open class IOController : Destroyable {
 
     private val keyPressedMap = HashMap<Int, () -> Unit>()
     private val keyReleasedMap = HashMap<Int, () -> Unit>()
@@ -109,7 +109,7 @@ class IOController : Destroyable {
         mouseHoldMap.clear()
     }
 
-    fun onKeyPressed(key: Int) {
+    open fun onKeyPressed(key: Int) {
         keyPressedMap[key]?.invoke()
 
         if (keyHoldMap.containsKey(key)) {
@@ -118,12 +118,12 @@ class IOController : Destroyable {
         }
     }
 
-    fun onKeyReleased(key: Int) {
+    open fun onKeyReleased(key: Int) {
         keyReleasedMap[key]?.invoke()
         isKeyHold = false
     }
 
-    fun onMousePressed(mouseButton: Int) {
+    open fun onMousePressed(mouseButton: Int) {
         mousePressedMap[mouseButton]?.invoke()
 
         if (mouseHoldMap.containsKey(mouseButton)) {
@@ -132,17 +132,20 @@ class IOController : Destroyable {
         }
     }
 
-    fun onMouseReleased(mouseButton: Int) {
+    open fun onMouseReleased(mouseButton: Int) {
         mouseReleasedMap[mouseButton]?.invoke()
         isMouseHold = false
     }
 
-    fun onMouseScrollUp() {
+    open fun onMouseScrollUp() {
         mouseScrollUpEvent.invoke()
     }
 
-    fun onMouseScrollDown() {
+    open fun onMouseScrollDown() {
         mouseScrollDownEvent.invoke()
+    }
+
+    open fun onMouseScrolled(xOffset: Double, yOffset: Double) {
     }
 
     fun onUpdate() {
@@ -155,6 +158,8 @@ class IOController : Destroyable {
     }
 
     override fun onDestroy() {
+        println("${IOController::class.java.simpleName} : onDestroy()")
+
         unbindKeyPressedEvents()
         unbindKeyReleasedEvents()
         unbindKeyHoldEvents()
@@ -163,6 +168,14 @@ class IOController : Destroyable {
         unbindMouseHoldEvents()
         unbindMouseScrollDownEvent()
         unbindMouseScrollUpEvent()
+    }
+
+    open fun onCreate() {
+        println("${IOController::class.java.simpleName} : onCreate()")
+    }
+
+    open fun onBind() {
+        println("${IOController::class.java.simpleName} : onBind()")
     }
 
 }

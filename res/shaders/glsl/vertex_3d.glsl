@@ -1,10 +1,10 @@
 #version 400 core
 
 layout(location = 0) in vec3 position;
-layout(location = 5) in mat4 transform;
-layout(location = 2) in vec2 coordinate;
-layout(location = 3) in vec4 color;
-layout(location = 4) in float slot;
+layout(location = 1) in vec2 coordinate;
+layout(location = 2) in vec4 color;
+layout(location = 3) in float slot;
+layout(location = 4) in mat4 transform;
 
 out vec2 passCoordinate;
 out vec4 passColor;

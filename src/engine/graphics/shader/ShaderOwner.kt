@@ -42,11 +42,11 @@ abstract class ShaderOwner(
         if (isPrepared) return
         isPrepared = true
 
-        findBuffersLocation()
+        findAttributesLocations()
         prepareBuffers()
     }
 
-    private fun findBuffersLocation() {
+    private fun findAttributesLocations() {
         val meshAttributes = meshBuffer.getAttributeList()
 
         for (attribute in meshAttributes) {

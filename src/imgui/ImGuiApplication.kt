@@ -2,91 +2,196 @@ package imgui
 
 import engine.Application
 import engine.core.ecs.Engine
-import engine.graphics.math.Colors
+import engine.graphics.math.Color4f
 import engine.platform.GLEngine
-import glm_.vec2.Vec2
-import imgui.classes.Context
-import imgui.impl.gl.ImplGL3
-import imgui.impl.glfw.ImplGlfw
+import imgui.flag.ImGuiBackendFlags
+import imgui.flag.ImGuiConfigFlags
+import imgui.flag.ImGuiStyleVar
+import imgui.flag.ImGuiWindowFlags
+import imgui.type.ImBoolean
+import org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE
+import java.util.concurrent.Executors
 
-open class ImGuiApplication : Application(), ScenePanel.Listener {
 
-    override val engine: Engine = GLEngine(title = "ImGui", client = this)
 
-    private lateinit var imguiContext: Context
-    private lateinit var imguiGl3: ImplGL3
-    private lateinit var imguiGlfw: ImplGlfw
+
+open class ImGuiApplication : Application(),
+    ScenePanel.Listener,
+    Toolbar.Listener
+{
+
+    override val engine: Engine = GLEngine(client = this)
 
     private val scenePanel = ScenePanel()
+    private val toolbar = Toolbar()
+
+    private val ioExecutors = Executors.newSingleThreadExecutor()
+
+    private val fileBrowser = FileBrowser()
+
+    private lateinit var mainWindow : ImGuiWindow
+//    private lateinit var sceneWindow : Window
 
     override fun onCreate() {
         super.onCreate()
+        createWindows()
+        prepareWindows()
 
-        engine.window.enableFullScreen()
+//        engine.createRender3d(sceneWindow.title)
 
-        imguiContext = Context()
-        imguiGl3 = ImplGL3()
-        imguiGlfw = ImplGlfw(engine.window.getWindow(), true)
-
+        setConfigs()
         setStyle()
         setListeners()
     }
 
-    private fun setStyle() {
-        ImGui.style.apply {
-            val bgColor = engine.backgroundColor
-            val blueGrotto = Colors.fromHex("#0476D0")
-            val tiffanyBlue = Colors.fromHex("#B4F5F0")
-            val blueGrottoDark = Colors.fromHex("#0476D0", alpha = 50)
-
-            colors[Col.WindowBg] (bgColor.x, bgColor.y, bgColor.z, bgColor.w)
-            colors[Col.Button] (blueGrotto.x, blueGrotto.y, blueGrotto.z, blueGrotto.w)
-            colors[Col.ButtonActive] (bgColor.x, bgColor.y, bgColor.z, bgColor.w)
-            colors[Col.ButtonHovered] (blueGrottoDark.x, blueGrottoDark.y, blueGrottoDark.z, blueGrottoDark.w)
-            colors[Col.Text] (tiffanyBlue.x, tiffanyBlue.y, tiffanyBlue.z, tiffanyBlue.w)
-            colors[Col.Border] (blueGrotto.x, blueGrotto.y, blueGrotto.z, blueGrotto.w)
-
-            windowTitleAlign = Vec2(0.5f, 0.5f)
-            windowRounding = 2f
+    private fun setConfigs() {
+        ImGui.getIO().apply {
+            configFlags = ImGuiConfigFlags.NavEnableKeyboard
+            configFlags = ImGuiConfigFlags.DockingEnable
+//            configFlags = ImGuiConfigFlags.ViewportsEnable
+            backendFlags = ImGuiBackendFlags.HasMouseCursors
+            backendPlatformName = "imgui_java_impl_glfw"
         }
+    }
+
+    private fun createWindows() {
+        mainWindow = engine.createImGuiWindow("Wizard")
+//        sceneWindow = engine.createWindow("Scene")
+    }
+
+    private fun prepareWindows() {
+//        sceneWindow.run {
+//            setViewport()
+//            setWindowListener(this@ImGuiApplication)
+//            setCursorListener(this@ImGuiApplication)
+//            disableVSync()
+//        }
+        mainWindow.run {
+            backgroundColor = Color4f(
+                red = 0.45f,
+                green = 0.55f,
+                blue = 0.6f,
+                alpha = 1f
+            )
+            setViewport()
+        }
+    }
+
+    override fun onBindIOController() {
+        super.onBindIOController()
+
+        mainWindow.setCursorListener(this)
+        mainWindow.setWindowListener(this)
+
+        mainWindow.ioController.run {
+            bindKeyPressedEvent(GLFW_KEY_ESCAPE) { onExit() }
+        }
+
+//        sceneWindow.ioController.run {
+//            bindKeyPressedEvent(GLFW.GLFW_KEY_V) { sceneWindow.toggleVSync() }
+//        }
+    }
+
+    private fun setStyle() {
+        ImGui.styleColorsDark()
     }
 
     private fun setListeners() {
         scenePanel.setListener(this)
+        toolbar.setListener(this)
     }
 
     override fun onUpdate() {
         newFrame()
+        beginDockSpace()
         updateWidgets()
+        endDockSpace()
         render()
-        super.onUpdate()
+    }
+
+    private fun endDockSpace() {
+        ImGui.end()
+    }
+
+    private fun beginDockSpace() {
+//        val mainViewport = ImGui.getMainViewport()
+//        ImGui.setNextWindowPos(mainViewport.workPosX, mainViewport.workPosY)
+//        ImGui.setNextWindowSize(mainViewport.workSizeX, mainViewport.workSizeY)
+//        ImGui.setNextWindowViewport(mainViewport.id)
+
+        var windowFlags = ImGuiWindowFlags.MenuBar or ImGuiWindowFlags.NoDocking
+
+        mainWindow.requestSize()
+        ImGui.setNextWindowPos(0.0f, 0.0f)
+        ImGui.setNextWindowSize(mainWindow.getWidth(), mainWindow.getHeight())
+
+        ImGui.pushStyleVar(ImGuiStyleVar.WindowRounding, 0f)
+        ImGui.pushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f)
+
+        windowFlags = windowFlags or
+                ImGuiWindowFlags.NoTitleBar or
+                ImGuiWindowFlags.NoCollapse or
+                ImGuiWindowFlags.NoResize or
+                ImGuiWindowFlags.NoMove or
+                ImGuiWindowFlags.NoBringToFrontOnFocus or
+                ImGuiWindowFlags.NoNavFocus
+
+        ImGui.begin("DockSpace", ImBoolean(true), windowFlags)
+        ImGui.popStyleVar(2)
+
+        ImGui.dockSpace(ImGui.getID("DockSpace"))
     }
 
     private fun newFrame() {
-        imguiGl3.newFrame()
-        imguiGlfw.newFrame()
+        mainWindow.newFrame()
         ImGui.newFrame()
     }
 
     private fun updateWidgets() {
+        toolbar.onUpdate()
         scenePanel.onUpdate()
+        ImGui.showDemoWindow()
     }
 
     private fun render() {
         ImGui.render()
-        imguiGl3.renderDrawData(ImGui.drawData!!)
+        mainWindow.render()
+    }
+
+    override fun onCursorCoordinatesChanged(x: Float, y: Float) {
+        super.onCursorCoordinatesChanged(x, y)
+        mainWindow.updateCursor(cursorX = x, cursorY = y)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        ioExecutors.shutdown()
         removeListeners()
-        imguiGl3.shutdown()
-        imguiGlfw.shutdown()
-        imguiContext.destroy()
     }
 
     private fun removeListeners() {
         scenePanel.removeListener()
+        toolbar.removeListener()
     }
+
+    override fun onExit() {
+        mainWindow.close()
+    }
+
+    override fun onImport() {
+        ioExecutors.execute(fileBrowser.apply {
+            setImportMode()
+        })
+    }
+
+    override fun onExport() {
+        ioExecutors.execute(fileBrowser.apply {
+            setExportMode()
+        })
+    }
+
+    override fun createMaxFps(): Long = mainWindow.getRefreshRate().toLong()
+
+    override fun isOpen(): Boolean = mainWindow.isOpen()
 
 }

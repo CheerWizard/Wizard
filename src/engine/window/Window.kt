@@ -1,29 +1,36 @@
 package engine.window
 
+import engine.core.Destroyable
+import engine.graphics.math.Color4f
+import engine.io.IOController
 import engine.platform.window.GLCursor
+import org.joml.Vector2i
+import org.lwjgl.BufferUtils
 import org.lwjgl.glfw.GLFW.*
-import org.lwjgl.opengl.GL11.glViewport
-import uno.glfw.GlfwWindow
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL11.*
+import org.lwjgl.opengl.GL30
+import org.lwjgl.system.MemoryUtil.NULL
 import java.awt.DisplayMode
 import java.awt.GraphicsEnvironment
 
-class Window(
-    private val xPosition: Int = 0,
-    private val yPosition: Int = 32,
+open class Window(
     private val display: DisplayMode = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode,
-    private val title: String,
-) {
+    val title: String,
+) : Destroyable {
 
     interface Listener {
         fun onWindowResized(width: Float, height: Float)
         fun onWindowClosed()
     }
 
-    private lateinit var mWindow: GlfwWindow
+    protected var pointer: Long = 0
 
     private val cursor: Cursor = GLCursor()
 
-    fun getWindow(): GlfwWindow = mWindow
+    open val ioController : IOController = IOController()
+
+    var backgroundColor : Color4f = Color4f()
 
     fun setCursorListener(cursorListener: Cursor.Listener) {
         cursor.setListener(cursorListener)
@@ -33,60 +40,110 @@ class Window(
         cursor.removeListener()
     }
 
-    fun setInputController(IOController: IOController) {
-        mWindow.keyCB = { key, scancode, action, mods ->
-            when (action) {
-                GLFW_PRESS -> IOController.onKeyPressed(key)
-                GLFW_RELEASE -> IOController.onKeyReleased(key)
-            }
-        }
-        mWindow.mouseButtonCB = { button, action, mods ->
-            when (action) {
-                GLFW_PRESS -> IOController.onMousePressed(button)
-                GLFW_RELEASE -> IOController.onMouseReleased(button)
-            }
-        }
-        mWindow.scrollCB = { offset ->
-            if (offset.y == -1.0) {
-                IOController.onMouseScrollDown()
-            } else {
-                IOController.onMouseScrollUp()
-            }
-        }
-    }
-
     fun setWindowListener(listener: Listener) {
-        mWindow.windowCloseCB = {
+        glfwSetWindowCloseCallback(pointer) {
             listener.onWindowClosed()
         }
-        mWindow.windowSizeCB = { size ->
-            listener.onWindowResized(width = size.x.toFloat(), height = size.y.toFloat())
+        glfwSetWindowSizeCallback(pointer) { _, width, height ->
+            setViewport()
+            listener.onWindowResized(width = width.toFloat(), height = height.toFloat())
         }
     }
 
-    fun isOpen(): Boolean = mWindow.isOpen
+    fun isOpen(): Boolean = !glfwWindowShouldClose(pointer)
 
-    fun onCreate() {
-        mWindow = GlfwWindow(width = display.width, height = display.height, title = title).apply {
-            pos.x = xPosition
-            pos.y = yPosition
-            makeContextCurrent()
+    open fun onCreate() {
+        pointer = glfwCreateWindow(
+            display.width,
+            display.height,
+            title,
+            NULL,
+            NULL
+        )
+
+        cursor.setWindow(pointer)
+
+        makeContextCurrent()
+        createIOController()
+    }
+
+    protected open fun createIOController() {
+        ioController.run {
+            onCreate()
+            onBind()
         }
-        cursor.setWindow(mWindow.handle.value)
+
+        glfwSetKeyCallback(pointer) { _, key, _, action, _ ->
+            when (action) {
+                GLFW_PRESS -> ioController.onKeyPressed(key)
+                GLFW_RELEASE -> ioController.onKeyReleased(key)
+            }
+        }
+        glfwSetMouseButtonCallback(pointer) { _, button, action, _ ->
+            when (action) {
+                GLFW_PRESS -> ioController.onMousePressed(button)
+                GLFW_RELEASE -> ioController.onMouseReleased(button)
+            }
+        }
+        glfwSetScrollCallback(pointer) { _, xOffset, yOffset ->
+            ioController.onMouseScrolled(xOffset = xOffset, yOffset = yOffset)
+            if (yOffset == -1.0) {
+                ioController.onMouseScrollDown()
+            } else {
+                ioController.onMouseScrollUp()
+            }
+        }
+    }
+
+    open fun makeContextCurrent() {
+        glfwMakeContextCurrent(pointer)
+        GL.createCapabilities()
     }
 
     fun getRefreshRate(): Int = display.refreshRate
 
-    fun setViewPort(
+    fun setMonitor(monitor: Monitor) {
+        glfwSetWindowMonitor(
+            pointer,
+            monitor.pointer,
+            monitor.position.x,
+            monitor.position.y,
+            monitor.size.x,
+            monitor.size.y,
+            monitor.refreshRate
+        )
+    }
+
+    private val frameBufferWidth = BufferUtils.createIntBuffer(1)
+    private val frameBufferHeight = BufferUtils.createIntBuffer(1)
+
+    fun getFrameBufferSize() : Vector2i {
+        val frameBufferSize = Vector2i()
+
+        glfwGetFramebufferSize(pointer, frameBufferWidth, frameBufferHeight)
+
+        return frameBufferSize.apply {
+            x = frameBufferWidth.get(0)
+            y = frameBufferHeight.get(0)
+        }
+    }
+
+    fun setViewport(
         x: Int = 0,
         y: Int = 0,
-        width: Int = display.width,
-        height: Int = display.height
+        width: Int,
+        height: Int
     ) = glViewport(x, y, width, height)
 
-    fun show() {
-        mWindow.show()
+    fun setViewport(
+        x: Int = 0,
+        y: Int = 0
+    ) {
+        val frameBufferSize = getFrameBufferSize()
+        glViewport(x, y, frameBufferSize.x, frameBufferSize.y)
     }
+
+    fun show() = glfwShowWindow(pointer)
 
     private var vSyncEnabled: Int = GLFW_FALSE
 
@@ -119,37 +176,75 @@ class Window(
             height /= 2
         }
 
-        mWindow.size.x = width
-        mWindow.size.y = height
+        setSize(width, height)
     }
 
     fun enableFullScreen() {
-        mWindow.size.x = display.width
-        mWindow.size.y = display.height
+        setSize(display.width, display.height)
     }
 
     fun close() {
-        mWindow.shouldClose = true
+        glfwSetWindowShouldClose(pointer, true)
     }
 
     fun swapBuffers() {
-        mWindow.swapBuffers()
+        glfwSwapBuffers(pointer)
     }
 
     fun pollEvents() {
         glfwPollEvents()
         cursor.onUpdate()
+        ioController.onUpdate()
     }
 
-    fun onDestroy() {
+    fun onUpdate() {
+        swapBuffers()
+        clearDisplay()
+        pollEvents()
+    }
+
+    fun clearDisplay() {
+        glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w)
+        glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
+    }
+
+    override fun onDestroy() {
         removeCursorListener()
-        mWindow.destroy()
+        ioController.onDestroy()
+        glfwDestroyWindow(pointer)
         glfwTerminate()
     }
 
-    fun getWidth(): Float = display.width.toFloat()
-    fun getHeight(): Float = display.height.toFloat()
-    fun getCursorCenterX(): Float = display.width.toFloat() / 2000f
-    fun getCursorCenterY(): Float = display.height.toFloat() / 2000f
+    private val windowBufferWidth = BufferUtils.createIntBuffer(1)
+    private val windowBufferHeight = BufferUtils.createIntBuffer(1)
+
+    fun requestSize() = glfwGetWindowSize(pointer, windowBufferWidth, windowBufferHeight)
+
+    fun getWidth(): Float = windowBufferWidth.get(0).toFloat()
+
+    fun getHeight(): Float = windowBufferHeight.get(0).toFloat()
+
+    fun getCursorCenterX(): Float = getWidth() / 2000f
+
+    fun getCursorCenterY(): Float = getHeight() / 2000f
+
+    fun hide() = glfwHideWindow(pointer)
+
+    fun isFocused(): Boolean = glfwGetWindowAttrib(pointer, GLFW_FOCUSED) == GLFW_FOCUSED
+
+    fun isMouseHold(): Boolean = ioController.isMouseHold()
+
+    fun setSize(width: Int, height: Int) {
+        glfwSetWindowSize(pointer, width, height)
+    }
+
+    fun setResizable() {
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE)
+    }
+
+    fun getSize(): Vector2i {
+        requestSize()
+        return Vector2i(windowBufferWidth.get(), windowBufferHeight.get())
+    }
 
 }

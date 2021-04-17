@@ -66,7 +66,7 @@ abstract class UBuffer<T : Buffer> : Destroyable {
     fun writeBuffer() {
         if (!bufferWritable) {
             bufferWritable = true
-            buffer.rewind()
+            buffer.clear()
         }
     }
 

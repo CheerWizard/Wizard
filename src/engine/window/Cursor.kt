@@ -30,7 +30,7 @@ abstract class Cursor {
     fun onUpdate() {
         listener?.let { l ->
             updateCoordinates()
-            l.onCursorCoordinatesChanged(xCoordinates.get(0).toFloat() / 1000f, yCoordinates.get(0).toFloat() / 1000f)
+            l.onCursorCoordinatesChanged(xCoordinates.get(0).toFloat(), yCoordinates.get(0).toFloat())
         }
     }
 

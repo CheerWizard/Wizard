@@ -1,6 +1,7 @@
 package engine.graphics.core.buffers
 
 import engine.core.Destroyable
+import engine.core.tools.Environment
 import engine.graphics.core.mesh.Mesh
 import engine.graphics.shader.attributes.AttributeList
 
@@ -29,7 +30,7 @@ class MeshBuffer(
     }
 
     fun allocateInstanceBuffer() {
-        instanceBuffer.allocateBuffer()
+        instanceBuffer.allocateBuffer(Environment.INSTANCE_COUNT)
     }
 
     fun addMesh(mesh: Mesh) {
@@ -54,41 +55,41 @@ class MeshBuffer(
     }
 
     fun tryUpdateMesh(mesh: Mesh) {
-        mesh.run {
-            if (indices.isUpdated) {
-                indexBuffer.run {
-                    allocateIndices(indexStart = mesh.indexStart, indexCount = mesh.getIndexCount())
-                    update(indices.data)
-                    applyChanges()
-                }
+        val indices = mesh.indices
+        if (indices.isUpdated) {
+            indexBuffer.run {
+                allocateIndices(indexStart = mesh.indexStart, indexCount = mesh.getIndexCount())
+                update(indices.data)
+                applyChanges()
             }
-
-            if (vertices.isUpdated) {
-                vertexBuffer.run {
-                    allocateMesh(vertexStart = mesh.vertexStart, vertexCount = mesh.getVertexCount())
-                    update(getVerticesData())
-                    applyChanges()
-                }
-            }
-
-            val updatedAttributes = mesh.getMeshUpdatedAttributes()
-            for (updatedAttribute in updatedAttributes) {
-                instanceBuffer.run {
-                    allocateAttribute(attributeStart = updatedAttribute.offset, attributeSize = updatedAttribute.size())
-                    update(updatedAttribute.data)
-                    applyChanges()
-                }
-                updatedAttribute.discardChanges()
-            }
-
-            discardChanges()
         }
+
+        val vertices = mesh.vertices
+        if (vertices.isUpdated) {
+            vertexBuffer.run {
+                allocateMesh(vertexStart = mesh.vertexStart, vertexCount = mesh.getVertexCount())
+                update(mesh.getVerticesData())
+                applyChanges()
+            }
+        }
+
+        val updatedAttributes = mesh.getMeshUpdatedAttributes()
+        for (updatedAttribute in updatedAttributes) {
+            instanceBuffer.run {
+                allocateAttribute(attributeStart = updatedAttribute.offset, attributeSize = updatedAttribute.size() * updatedAttribute.count)
+                update(updatedAttribute.data)
+                applyChanges()
+            }
+            updatedAttribute.discardChanges()
+        }
+
+        mesh.discardChanges()
     }
 
     fun prepare() {
         indexBuffer.prepare()
-        vertexBuffer.prepare()
         instanceBuffer.prepare()
+        vertexBuffer.prepare()
     }
 
     fun enableAttributes() {
@@ -104,13 +105,13 @@ class MeshBuffer(
 
     fun unbind() {
         indexBuffer.unbind()
-        vertexBuffer.unbind()
         instanceBuffer.unbind()
+        vertexBuffer.unbind()
     }
 
     fun disableAttributes() {
-        vertexBuffer.disableAttributes()
         instanceBuffer.disableAttributes()
+        vertexBuffer.disableAttributes()
     }
 
     fun readBuffers() {

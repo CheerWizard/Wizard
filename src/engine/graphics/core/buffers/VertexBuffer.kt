@@ -42,6 +42,10 @@ abstract class VertexBuffer(
         buffer = BufferUtils.createFloatBuffer(totalVertexCount * attributes.getTotalSize())
     }
 
+    fun allocateBuffer(totalInstanceCount: Int) {
+        buffer = BufferUtils.createFloatBuffer(totalInstanceCount * attributes.getTotalSize())
+    }
+
     override fun allocateSubBuffer() {
         subBuffer = BufferUtils.createFloatBuffer(attributes.getTotalSize())
     }

@@ -93,13 +93,13 @@ abstract class RenderSystem(screenWidth: Float, screenHeight: Float) : System() 
         val instanceCount = entityGroup.entities.size
 
         if (indexCount == 0) {
-            if (instanceCount > 1) {
+            if (instanceCount > 0) {
                 drawArrays(vertexCount = vertexCount, instanceCount = instanceCount)
             } else {
                 drawArrays(vertexCount = vertexCount)
             }
         } else {
-            if (instanceCount > 1) {
+            if (instanceCount > 0) {
                 drawElements(indexCount = indexCount, instanceCount = instanceCount)
             } else {
                 drawElements(indexCount = indexCount)

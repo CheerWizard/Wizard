@@ -15,13 +15,11 @@ class ScenePanel {
     }
 
     fun onUpdate() {
-        with(ImGui) {
-            begin("Scene")
-            button("Add Entity Group")
-            sameLine()
-            button("Add Scene Component")
-            end()
-        }
+        ImGui.begin("Scene")
+        ImGui.button("Add Entity Group")
+        ImGui.sameLine()
+        ImGui.button("Add Scene Component")
+        ImGui.end()
     }
 
 }

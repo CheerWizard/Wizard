@@ -1,6 +1,7 @@
 package engine.core.ecs
 
 import engine.core.Destroyable
+import engine.core.collection.DestroyableHashMap
 import engine.core.collection.DestroyableTreeMap
 import engine.core.tools.FpsTicker
 import engine.core.tools.VideoCard
@@ -10,30 +11,65 @@ import engine.graphics.tools.ObjParser
 import engine.graphics.tools.ShaderFactory
 import engine.graphics.tools.TerrainParser
 import engine.window.Cursor
-import engine.window.IOController
 import engine.window.Window
+import imgui.ImGuiWindow
 
-abstract class Engine(title: String, protected var client: Client) : Thread(), Destroyable {
+abstract class Engine(protected var client: Client) : Destroyable {
 
     interface Client : Cursor.Listener, Window.Listener {
         fun onCreate()
+        fun onBindIOController()
         fun onUpdate()
         fun onDestroy()
+        fun isOpen(): Boolean
+        fun createMaxFps(): Long
     }
-
-    val window: Window = Window(title = title)
 
     var backgroundColor: Color4f = Colors.fromHex("#041F60")
 
     abstract val shaderFactory: ShaderFactory
     abstract var videoCard: VideoCard
 
-    private val systems: DestroyableTreeMap<String, System> = DestroyableTreeMap()
+    private val windows = DestroyableHashMap<String, Window>()
 
-    val ioController = IOController()
+    private val systems: DestroyableTreeMap<String, System> = DestroyableTreeMap()
 
     val objParser: ObjParser = ObjParser()
     val terrainParser: TerrainParser = TerrainParser()
+
+    fun getWindow(title: String): Window? = windows[title]
+
+    fun getNonNullWindow(title: String): Window = windows[title] as Window
+
+    fun createWindow(title: String): Window {
+        val window = Window(title = title).apply {
+            onCreate()
+            show()
+        }
+
+        windows[title] = window
+
+        return window
+    }
+
+    fun createImGuiWindow(title: String): ImGuiWindow {
+        val window = ImGuiWindow(title = title).apply {
+            onCreate()
+            show()
+        }
+
+        windows[title] = window
+
+        return window
+    }
+
+    fun removeWindow(title: String) {
+        windows.remove(title)
+    }
+
+    fun removeWindows() {
+        windows.clear()
+    }
 
     fun setMaxFps(fps: Long) {
         FpsTicker.maxFps = fps
@@ -47,9 +83,9 @@ abstract class Engine(title: String, protected var client: Client) : Thread(), D
         return -1
     }
 
-    override fun run() {
+    fun run() {
         onCreate()
-        while (window.isOpen()) {
+        while (client.isOpen()) {
             onUpdate()
         }
         onDestroy()
@@ -58,46 +94,38 @@ abstract class Engine(title: String, protected var client: Client) : Thread(), D
     protected open fun onCreate() {
         createLibraries()
 
-        window.run {
-            setViewPort()
-            setInputController(ioController)
-            setWindowListener(client)
-            setCursorListener(client)
-            show()
+        client.run {
+            onCreate()
+            onBindIOController()
         }
-
-        FpsTicker.maxFps = window.getRefreshRate().toLong()
-
-        client.onCreate()
 
         for (system in systems.values) {
             system.run {
                 onPrepare()
             }
         }
+
+        FpsTicker.maxFps = client.createMaxFps()
+
+        enableDepthTest()
+        enableTransparency()
     }
 
     protected abstract fun createLibraries()
 
     protected open fun onUpdate() {
         FpsTicker.deltaTimeOf {
-            clearDisplay()
-
-            window.pollEvents()
-
-            ioController.onUpdate()
+            for (window in windows.values) {
+                window.onUpdate()
+            }
 
             client.onUpdate()
 
             for (system in systems.values) {
                 system.onUpdate()
             }
-
-            window.swapBuffers()
         }
     }
-
-    protected abstract fun clearDisplay()
 
     fun<T : System> putSystem(system: T) {
         systems[system.tag] = system
@@ -138,11 +166,16 @@ abstract class Engine(title: String, protected var client: Client) : Thread(), D
         sceneComponentId: Short
     ) : R = getSystem<T>(systemTag).getNonNullSceneComponent(sceneComponentId)
 
+    abstract fun createRender3d(windowTitle: String)
+
     override fun onDestroy() {
-        ioController.onDestroy()
         client.onDestroy()
         systems.clear()
-        window.onDestroy()
+        removeWindows()
     }
+
+    abstract fun enableDepthTest()
+    abstract fun enableTransparency()
+    abstract fun createVideoCard()
 
 }

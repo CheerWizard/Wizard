@@ -1,30 +1,21 @@
 package engine
 
 import engine.core.ecs.Engine
-import org.lwjgl.glfw.GLFW
 
 abstract class Application : Engine.Client {
 
     protected abstract val engine: Engine
 
     fun run() {
-        engine.start()
-    }
-
-    protected open fun bindIOController() {
-        engine.ioController.run {
-            bindKeyPressedEvent(GLFW.GLFW_KEY_V) { engine.window.toggleVSync() }
-            bindKeyPressedEvent(GLFW.GLFW_KEY_F) { engine.window.toggleFullScreen() }
-            bindKeyPressedEvent(GLFW.GLFW_KEY_ESCAPE) { engine.window.close() }
-        }
+        engine.run()
     }
 
     override fun onCreate() {
         println("onCreate()")
-        bindIOController()
     }
 
-    override fun onUpdate() {
+    override fun onBindIOController() {
+        println("onBindIOController()")
     }
 
     override fun onDestroy() {

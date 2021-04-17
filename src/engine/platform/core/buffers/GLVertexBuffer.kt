@@ -21,14 +21,14 @@ class GLVertexBuffer(
     override var id: Int = glGenBuffers()
 
     override fun onPrepare() {
-        glBufferData(GL_ARRAY_BUFFER, buffer, GL_STREAM_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, buffer, GL_DYNAMIC_DRAW)
         createAttributes()
     }
 
     private fun createAttributes() {
         val stride = attributes.getByteSize()
+        var attributeOffsetBytes = 0
 
-        var totalAttributeByteSize = 0
         for (i in attributes.indices) {
             val attribute = attributes[i]
 
@@ -39,13 +39,13 @@ class GLVertexBuffer(
                     GL_FLOAT,
                     false,
                     stride,
-                    totalAttributeByteSize.toLong()
+                    attributeOffsetBytes.toLong()
                 )
 
                 val attributeLocation = if (attribute.count > 1) attribute.location + j else attribute.location
                 glVertexAttribDivisor(attributeLocation, attribute.type)
 
-                totalAttributeByteSize += attribute.size() * Float.SIZE_BYTES
+                attributeOffsetBytes += attribute.size() * Float.SIZE_BYTES
             }
         }
     }

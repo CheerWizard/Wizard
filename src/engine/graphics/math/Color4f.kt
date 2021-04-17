@@ -14,6 +14,8 @@ open class Color4f(
     alpha
 ) {
 
+    fun toArray(): FloatArray = floatArrayOf(x, y, z, w)
+
     companion object {
         fun white(): Color4f = Color4f(
             red = 1f,

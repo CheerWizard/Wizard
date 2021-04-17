@@ -1,5 +1,5 @@
-import sandbox.SandboxApplication
+import imgui.ImGuiApplication
 
 fun main() {
-    SandboxApplication().run()
+    ImGuiApplication().run()
 }

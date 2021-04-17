@@ -24,6 +24,7 @@ object FpsTicker {
         }
 
         println("Frame update time = $deltaTime ms!")
+        println("FPS = ${1000 / deltaTime}")
     }
 
 }

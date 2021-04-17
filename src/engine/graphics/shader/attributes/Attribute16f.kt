@@ -5,7 +5,7 @@ import org.joml.Matrix4f
 class Attribute16f(
     name: String = "",
     location: Int = 0,
-    count: Int = 4,
+    count: Int = 1,
     type: Int = VERTEX_TYPE,
     data: Matrix4f = Matrix4f()
 ) : Attribute(
